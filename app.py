@@ -79,9 +79,12 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tab1, tab2, tab3 = st.tabs(
-    ["🏆 الحسبة والترتيب", "➕ إضافة / تعديل نقاط", "⚙️ إدارة الأعضاء"]
-)
+tab1, tab2, tab3, tab4 = st.tabs([
+    "🏆 الحسبة والترتيب",
+    "📋 تصدير الرسالة",
+    "➕ إضافة / تعديل نقاط",
+    "⚙️ إدارة الأعضاء",
+])
 
 # --- التبويب الأول: جدول الحسبة والترتيب ---
 with tab1:
@@ -95,7 +98,6 @@ with tab1:
   if not df.empty:
     df["الرتبة"] = df["الأوبلز"].apply(get_rank)
 
-    # عرض أبطال التوب 3 ببطاقات مميزة
     col1, col2, col3 = st.columns(3)
     if len(df) >= 1:
       col1.metric(
@@ -133,8 +135,50 @@ with tab1:
   else:
     st.info("💡 لا يوجد أعضاء مسجلين حتى الآن. ابدأ بإضافة النقاط من التبويب المالي.")
 
-# --- التبويب الثاني: إضافة وتعديل النقاط ---
+# --- التبويب الثاني: تصدير الرسالة جاهزة للمجموعة ---
 with tab2:
+  st.subheader("📋 تصدير الحسبة كنص جاهز للمجموعة")
+  st.write("يمكنك نسخ النص أدناه بلمسة زر وإرساله مباشرة إلى سيرفر المجموعة:")
+
+  conn = get_connection()
+  df_export = pd.read_sql_query(
+      "SELECT name, oplz FROM members ORDER BY oplz DESC", conn
+  )
+  conn.close()
+
+  if not df_export.empty:
+    msg_lines = [
+        "✨ **دليل نظام نقاط الأوبلز | Oplz System** ✨\n",
+        "📊 **حسبة الترتيب العام للأعضاء (Top Leaderboard):**\n",
+    ]
+
+    for rank, row in enumerate(df_export.itertuples(), start=1):
+      name = row.name
+      oplz = row.oplz
+      user_rank = get_rank(oplz)
+
+      prefix = "▫️"
+      if rank == 1:
+        prefix = "🥇"
+      elif rank == 2:
+        prefix = "🥈"
+      elif rank == 3:
+        prefix = "🥉"
+
+      msg_lines.append(
+          f"{prefix} **#{rank} {name}** ➔ {oplz:g} أوبلز | {user_rank}"
+      )
+
+    msg_lines.append("\n🚀 *استمروا في التفاعل والمشاركة لزيادة رصيد الأوبلز!*")
+    full_message = "\n".join(msg_lines)
+
+    st.code(full_message, language="markdown")
+    st.caption("💡 اضغط على أيقونة النسخ المجهزة أعلى مربع النص لأخذه حافظتك مباشرة.")
+  else:
+    st.info("لا توجد بيانات حالياً لتصديرها.")
+
+# --- التبويب الثالث: إضافة وتعديل النقاط ---
+with tab3:
   st.subheader("تسجيل النقاط")
 
   mode = st.radio(
@@ -176,8 +220,8 @@ with tab2:
       else:
         st.warning("⚠️ يرجى كتابة اسم العضو أولاً!")
 
-# --- التبويب الثالث: إدارة الأعضاء ---
-with tab3:
+# --- التبويب الرابع: إدارة الأعضاء ---
+with tab4:
   st.subheader("⚙️ تعديل البيانات")
 
   conn = get_connection()
@@ -217,4 +261,4 @@ with tab3:
         st.rerun()
   else:
     st.info("لا يوجد أعضاء في القائمة حالياً.")
-      
+          
