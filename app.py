@@ -121,10 +121,8 @@ def generate_leaderboard_image(df):
 
   # رسم صفوف الأعضاء
   y_offset = 130
-  for rank, row in enumerate(df.itertuples(), start=1):
-    name = row. العضو
-    oplz = row.Opal_s
-    role = row.الصفة
+  for rank, row in enumerate(df.itertuples(index=False), start=1):
+    name, oplz, role = row[0], row[1], row[2]
     rank_title = get_rank(oplz, role)
 
     # ألوان مراكز الصدارة
@@ -211,9 +209,7 @@ tab1, tab2, tab3 = st.tabs(
 with tab1:
   conn = get_connection()
   df = pd.read_sql_query(
-      "SELECT name AS 'العضو', oplz AS 'Opal_s', role AS 'الصفة' FROM members"
-      " ORDER BY oplz DESC",
-      conn,
+      "SELECT name, oplz, role FROM members ORDER BY oplz DESC", conn
   )
   conn.close()
 
@@ -223,8 +219,8 @@ with tab1:
     # توليد الصورة فوراً
     img_bytes = generate_leaderboard_image(df)
 
-    # عرض الصورة بحجم واضح
-    st.image(img_bytes, use_column_width=True)
+    # عرض الصورة بحجم متوافق مع كافة الشاشات
+    st.image(img_bytes, use_container_width=True)
 
     # زر التحميل السريع
     st.download_button(
@@ -319,4 +315,4 @@ with tab3:
         conn.commit()
         conn.close()
         st.rerun()
-          
+      
