@@ -1,12 +1,7 @@
-import io
-import os
 import sqlite3
-import urllib.request
-import arabic_reshaper
-from bidi.algorithm import get_display
 import pandas as pd
-from PIL import Image, ImageDraw, ImageFont
 import streamlit as st
+import streamlit.components.v1 as components
 
 # 1. إعدادات الصفحة
 st.set_page_config(
@@ -48,7 +43,7 @@ init_db()
 
 
 # 3. حساب الرتب
-def get_rank_ui(oplz, role="عضو"):
+def get_rank(oplz, role="عضو"):
   if role == "إداري":
     if oplz >= 800:
       return "⚔️ LEADER (القائد)"
@@ -73,169 +68,170 @@ def get_rank_ui(oplz, role="عضو"):
       return "🌱 ROOKIE (الوافد)"
 
 
-def get_rank_img(oplz, role="عضو"):
-  if role == "إداري":
-    if oplz >= 800:
-      return "LEADER - القائد"
-    elif oplz >= 500:
-      return "OPAL'S MANAGER - مسؤول النقاط"
-    elif oplz >= 300:
-      return "MODERATOR - المشرف العام"
-    elif oplz >= 150:
-      return "HOST - المضيف"
-    elif oplz >= 75:
-      return "ADMIN - الإداري"
-    else:
-      return "NEW ADMIN - إداري مستجد"
-  else:
-    if oplz >= 500:
-      return "LEGEND - الأسطورة"
-    elif oplz >= 200:
-      return "ELITE - النخبة"
-    elif oplz >= 50:
-      return "ACTIVE - المتفاعل"
-    else:
-      return "ROOKIE - الوافد"
+# 4. توليد كود HTML لتصميم بطاقة الترتيب ورسمها كصورة نقية
+def create_html_card(df):
+  rows_html = ""
 
-
-# 4. تحميل خط عربي مضمون
-def get_font(size):
-  font_path = "Tajawal-Bold.ttf"
-
-  if not os.path.exists(font_path) or os.path.getsize(font_path) < 10000:
-    url = "https://github.com/google/fonts/raw/main/ofl/tajawal/Tajawal-Bold.ttf"
-    try:
-      req = urllib.request.Request(
-          url, headers={"User-Agent": "Mozilla/5.0"}
-      )
-      with (
-          urllib.request.urlopen(req) as response,
-          open(font_path, "wb") as out_file,
-      ):
-        out_file.write(response.read())
-    except Exception:
-      pass
-
-  try:
-    return ImageFont.truetype(font_path, size)
-  except Exception:
-    return ImageFont.load_default()
-
-
-def fix_arabic(text):
-  if not text:
-    return ""
-  reshaped = arabic_reshaper.reshape(str(text))
-  return get_display(reshaped)
-
-
-# 5. رسم صورة بطاقة الترتيب بدون إيموجيات داخل الرسم
-def generate_leaderboard_image(df):
-  width = 900
-  height = 160 + (len(df) * 85)
-  height = max(height, 450)
-
-  img = Image.new("RGB", (width, height), color="#0F172A")
-  draw = ImageDraw.Draw(img)
-
-  font_title = get_font(34)
-  font_sub = get_font(20)
-  font_card = get_font(22)
-
-  # الهيدر العلوي
-  draw.rectangle([0, 0, width, 115], fill="#1E293B")
-  draw.text(
-      (width / 2, 38),
-      fix_arabic("حسبة ونقاط نظام Opal's System"),
-      fill="#4DEF8E",
-      font=font_title,
-      anchor="mm",
-  )
-  draw.text(
-      (width / 2, 85),
-      fix_arabic("المشرف: Aurther   |   المساعد: Lamino"),
-      fill="#94A3B8",
-      font=font_sub,
-      anchor="mm",
-  )
-
-  # رسم صفوف الأعضاء
-  y_offset = 135
   for rank, row in enumerate(df.itertuples(index=False), start=1):
     name, oplz, role = str(row[0]), float(row[1]), str(row[2])
-    rank_title = get_rank_img(oplz, role)
+    rank_title = get_rank(oplz, role)
 
-    bg_color = "#1E293B"
-    text_color = "#FFFFFF"
-    rank_str = f"#{rank}"
+    rank_class = "rank-normal"
+    badge_class = "b-normal"
+    badge_text = f"#{rank}"
 
     if rank == 1:
-      bg_color = "#3B270C"
-      text_color = "#FFD700"
-      rank_str = "#1 TOP"
+      rank_class = "rank-1"
+      badge_class = "b-1"
+      badge_text = "🥇 #1"
     elif rank == 2:
-      bg_color = "#28303D"
-      text_color = "#C0C0C0"
-      rank_str = "#2 TOP"
+      rank_class = "rank-2"
+      badge_class = "b-2"
+      badge_text = "🥈 #2"
     elif rank == 3:
-      bg_color = "#33221A"
-      text_color = "#CD7F32"
-      rank_str = "#3 TOP"
+      rank_class = "rank-3"
+      badge_class = "b-3"
+      badge_text = "🥉 #3"
 
-    draw.rounded_rectangle(
-        [30, y_offset, width - 30, y_offset + 70],
-        radius=10,
-        fill=bg_color,
-        outline="#334155",
-        width=1,
+    role_tag = (
+        '<span class="role-tag tag-admin">🛡️ إداري</span>'
+        if role == "إداري"
+        else '<span class="role-tag tag-user">👥 عضو</span>'
     )
 
-    tag_str = "(إداري)" if role == "إداري" else "(عضو)"
+    rows_html += f"""
+        <div class="member-card {rank_class}">
+            <div class="right-section">
+                <span class="badge {badge_class}">{badge_text}</span>
+                <span class="member-name">{name}</span>
+                {role_tag}
+            </div>
+            <div class="left-section">
+                <span class="points">{oplz:g} Opal's</span>
+                <span class="rank-title">{rank_title}</span>
+            </div>
+        </div>
+        """
 
-    # رقم المركز
-    draw.text(
-        (width - 50, y_offset + 35),
-        rank_str,
-        fill=text_color,
-        font=font_card,
-        anchor="rm",
-    )
+  html_code = f"""
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+      <style>
+        * {{ box-sizing: border-box; font-family: 'Cairo', sans-serif; margin: 0; padding: 0; }}
+        body {{ background-color: transparent; color: #FFFFFF; padding: 10px; direction: rtl; text-align: right; }}
+        
+        #card-container {{
+          background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+          border: 2px solid #334155;
+          border-radius: 20px;
+          padding: 25px;
+          max-width: 800px;
+          margin: 0 auto;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }}
+        .header {{ text-align: center; margin-bottom: 25px; }}
+        .title {{ color: #4DEF8E; font-size: 26px; font-weight: 900; margin-bottom: 10px; }}
+        .admin-box {{
+          display: inline-block;
+          background: #1E293B;
+          border: 1px solid #334155;
+          padding: 6px 18px;
+          border-radius: 25px;
+          font-size: 14px;
+          color: #CBD5E1;
+        }}
+        .member-card {{
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background: #1E293B;
+          border: 1px solid #334155;
+          border-radius: 14px;
+          padding: 14px 20px;
+          margin-bottom: 12px;
+        }}
+        .rank-1 {{ background: linear-gradient(90deg, #3B270C 0%, #1E293B 100%); border-color: #FFD700; }}
+        .rank-2 {{ background: linear-gradient(90deg, #28303D 0%, #1E293B 100%); border-color: #C0C0C0; }}
+        .rank-3 {{ background: linear-gradient(90deg, #33221A 0%, #1E293B 100%); border-color: #CD7F32; }}
+        
+        .right-section {{ display: flex; align-items: center; gap: 12px; }}
+        .badge {{
+          font-weight: 900;
+          font-size: 15px;
+          padding: 4px 12px;
+          border-radius: 8px;
+          background: #334155;
+          color: #FFF;
+        }}
+        .b-1 {{ background: #FFD700; color: #000; }}
+        .b-2 {{ background: #C0C0C0; color: #000; }}
+        .b-3 {{ background: #CD7F32; color: #FFF; }}
+        
+        .member-name {{ font-size: 18px; font-weight: 700; color: #F8FAFC; }}
+        .role-tag {{ font-size: 12px; padding: 2px 8px; border-radius: 6px; margin-right: 6px; }}
+        .tag-admin {{ background: #0284C7; color: #FFF; }}
+        .tag-user {{ background: #334155; color: #94A3B8; }}
+        
+        .left-section {{ display: flex; align-items: center; gap: 12px; }}
+        .points {{ color: #4DEF8E; font-weight: 700; font-size: 16px; }}
+        .rank-title {{ color: #E2E8F0; font-size: 14px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px; }}
+        
+        .btn-container {{ text-align: center; margin-top: 20px; }}
+        .dl-btn {{
+          background: #4DEF8E;
+          color: #0F172A;
+          font-weight: 900;
+          font-size: 16px;
+          border: none;
+          padding: 14px 28px;
+          border-radius: 12px;
+          cursor: pointer;
+          box-shadow: 0 4px 15px rgba(77, 239, 142, 0.3);
+          width: 100%;
+          max-width: 400px;
+        }}
+        .dl-btn:hover {{ background: #3be07d; }}
+      </style>
+    </head>
+    <body>
+      <div id="card-container">
+        <div class="header">
+          <div class="title">✨ حسبة ونقاط نظام Opal's System ✨</div>
+          <div class="admin-box">👑 <b>المشرف:</b> Aurther &nbsp;|&nbsp; 🤝 <b>المساعد:</b> Lamino</div>
+        </div>
+        {rows_html}
+      </div>
 
-    # الاسم والصفة
-    full_name_arabic = fix_arabic(f"{name} {tag_str}")
-    draw.text(
-        (width - 160, y_offset + 35),
-        full_name_arabic,
-        fill="#F8FAFC",
-        font=font_card,
-        anchor="rm",
-    )
+      <div class="btn-container">
+        <button class="dl-btn" onclick="downloadCard()">📥 اضغط هنا لتحميل بطاقة الصورة (PNG)</button>
+      </div>
 
-    # النقاط والرتبة
-    score_text = f"{oplz:g} Opal's  |"
-    draw.text(
-        (50, y_offset + 35),
-        score_text,
-        fill=text_color,
-        font=font_card,
-        anchor="lm",
-    )
-    draw.text(
-        (220, y_offset + 35),
-        fix_arabic(rank_title),
-        fill=text_color,
-        font=font_card,
-        anchor="lm",
-    )
-
-    y_offset += 85
-
-  img_byte_arr = io.BytesIO()
-  img.save(img_byte_arr, format="PNG")
-  return img_byte_arr.getvalue()
+      <script>
+        function downloadCard() {{
+          const card = document.getElementById('card-container');
+          html2canvas(card, {{
+            scale: 2,
+            backgroundColor: '#0F172A',
+            useCORS: true
+          }}).then(canvas => {{
+            const link = document.createElement('a');
+            link.download = 'opals_leaderboard.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+          }});
+        }}
+      </script>
+    </body>
+    </html>
+    """
+  return html_code
 
 
-# 6. واجهة المستخدم
+# 5. الواجهة الرئيسية
 st.markdown(
     '<p class="main-title">✨ نظام نقاط Opal\'s | حسبة الترتيب ✨</p>',
     unsafe_allow_html=True,
@@ -264,18 +260,9 @@ with tab1:
   conn.close()
 
   if not df.empty:
-    st.subheader("🖼️ بطاقة الحسبة جاهزة للحفظ:")
-
-    img_bytes = generate_leaderboard_image(df)
-    st.image(img_bytes, use_container_width=True)
-
-    st.download_button(
-        label="📥 ضغطة واحدة لحفظ الصورة على جهازك",
-        data=img_bytes,
-        file_name="opals_leaderboard.png",
-        mime="image/png",
-        use_container_width=True,
-    )
+    html_content = create_html_card(df)
+    card_height = 250 + (len(df) * 80)
+    components.html(html_content, height=card_height, scrolling=True)
   else:
     st.info("💡 لا يوجد أعضاء مسجلين حتى الآن. قم بإضافة النقاط من التبويب الثاني.")
 
@@ -361,4 +348,4 @@ with tab3:
         conn.commit()
         conn.close()
         st.rerun()
-    
+      
