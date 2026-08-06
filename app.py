@@ -4,7 +4,7 @@ import streamlit as st
 
 # 1. إعدادات الصفحة والواجهة العصرية
 st.set_page_config(
-    page_title="نظام نقاط الأوبلز | Oplz System",
+    page_title="نظام نقاط Opal's | Opal's System",
     page_icon="💎",
     layout="centered",
 )
@@ -24,11 +24,19 @@ st.markdown(
         font-size: 2.2rem;
         margin-bottom: 5px;
     }
-    .sub-title {
+    .admin-info {
         text-align: center;
-        color: #A0AAB8;
-        font-size: 1rem;
+        background-color: #1E2638;
+        border-radius: 12px;
+        padding: 12px;
         margin-bottom: 25px;
+        border: 1px solid #2E3A52;
+    }
+    .admin-badge {
+        display: inline-block;
+        margin: 0 10px;
+        font-size: 1.05rem;
+        color: #E2E8F0;
     }
     </style>
 """,
@@ -71,11 +79,19 @@ def get_rank(oplz):
 
 # 4. الواجهة الرئيسية
 st.markdown(
-    '<p class="main-title">✨ نظام نقاط الأوبلز | Oplz System ✨</p>',
+    '<p class="main-title">✨ نظام نقاط Opal\'s | Opal\'s System ✨</p>',
     unsafe_allow_html=True,
 )
+
+# عرض معلومات الإدارة (المشرف والمساعد)
 st.markdown(
-    '<p class="sub-title">لوحة تحكم إدارية لتتبع النقاط وترتيب الأعضاء</p>',
+    """
+    <div class="admin-info">
+        <span class="admin-badge">👑 <b>المشرف العام:</b> Aurther</span>
+        <span style="color: #4A5568;">|</span>
+        <span class="admin-badge">🤝 <b>المساعد:</b> Lamino</span>
+    </div>
+""",
     unsafe_allow_html=True,
 )
 
@@ -90,32 +106,33 @@ tab1, tab2, tab3, tab4 = st.tabs([
 with tab1:
   conn = get_connection()
   df = pd.read_sql_query(
-      "SELECT name AS 'العضو', oplz AS 'الأوبلز' FROM members ORDER BY oplz DESC",
+      "SELECT name AS 'العضو', oplz AS 'Opal\'s' FROM members ORDER BY oplz"
+      " DESC",
       conn,
   )
   conn.close()
 
   if not df.empty:
-    df["الرتبة"] = df["الأوبلز"].apply(get_rank)
+    df["الرتبة"] = df["Opal's"].apply(get_rank)
 
     col1, col2, col3 = st.columns(3)
     if len(df) >= 1:
       col1.metric(
           "🥇 المركز الأول",
           df.iloc[0]["العضو"],
-          f"{df.iloc[0]['الأوبلز']:g} أوبلز",
+          f"{df.iloc[0]['Opal\'s']:g} Opal's",
       )
     if len(df) >= 2:
       col2.metric(
           "🥈 المركز الثاني",
           df.iloc[1]["العضو"],
-          f"{df.iloc[1]['الأوبلز']:g} أوبلز",
+          f"{df.iloc[1]['Opal\'s']:g} Opal's",
       )
     if len(df) >= 3:
       col3.metric(
           "🥉 المركز الثالث",
           df.iloc[2]["العضو"],
-          f"{df.iloc[2]['الأوبلز']:g} أوبلز",
+          f"{df.iloc[2]['Opal\'s']:g} Opal's",
       )
 
     st.divider()
@@ -125,8 +142,8 @@ with tab1:
         df,
         column_config={
             "العضو": st.column_config.TextColumn("اسم العضو"),
-            "الأوبلز": st.column_config.NumberColumn(
-                "رصيد الأوبلز", format="%.1f 🪙"
+            "Opal's": st.column_config.NumberColumn(
+                "رصيد Opal's", format="%.1f 🪙"
             ),
             "الرتبة": st.column_config.TextColumn("الرتبة المستحقة"),
         },
@@ -148,7 +165,8 @@ with tab2:
 
   if not df_export.empty:
     msg_lines = [
-        "✨ **دليل نظام نقاط الأوبلز | Oplz System** ✨\n",
+        "✨ **دليل نظام نقاط Opal's | Opal's System** ✨",
+        "👑 **المشرف العام:** Aurther | 🤝 **المساعد:** Lamino\n",
         "📊 **حسبة الترتيب العام للأعضاء (Top Leaderboard):**\n",
     ]
 
@@ -166,10 +184,10 @@ with tab2:
         prefix = "🥉"
 
       msg_lines.append(
-          f"{prefix} **#{rank} {name}** ➔ {oplz:g} أوبلز | {user_rank}"
+          f"{prefix} **#{rank} {name}** ➔ {oplz:g} Opal's | {user_rank}"
       )
 
-    msg_lines.append("\n🚀 *استمروا في التفاعل والمشاركة لزيادة رصيد الأوبلز!*")
+    msg_lines.append("\n🚀 *استمروا في التفاعل والمشاركة لزيادة رصيد Opal's!*")
     full_message = "\n".join(msg_lines)
 
     st.code(full_message, language="markdown")
@@ -183,7 +201,10 @@ with tab3:
 
   mode = st.radio(
       "اختر طريقة الإضافة:",
-      ["إضافة أوبلز مباشرة 💎", "تحويل نقاط تفاعل (كل 50 نقطة = 1 أوبلز) 🪙"],
+      [
+          "إضافة Opal's مباشرة 💎",
+          "تحويل نقاط تفاعل (كل 50 نقطة = 1 Opal's) 🪙",
+      ],
       horizontal=True,
   )
 
@@ -192,7 +213,7 @@ with tab3:
 
     if "مباشرة" in mode:
       val_input = st.number_input(
-          "عدد الأوبلز المُضافة:", min_value=0.1, value=1.0, step=0.5
+          "عدد Opal's المُضافة:", min_value=0.1, value=1.0, step=0.5
       )
     else:
       act_input = st.number_input(
@@ -215,7 +236,7 @@ with tab3:
         conn.commit()
         conn.close()
 
-        st.success(f"✅ تم إضافة {val_input:g} أوبلز بنجاح لـ ({clean_name})")
+        st.success(f"✅ تم إضافة {val_input:g} Opal's بنجاح لـ ({clean_name})")
         st.rerun()
       else:
         st.warning("⚠️ يرجى كتابة اسم العضو أولاً!")
@@ -236,7 +257,7 @@ with tab4:
 
     with col_btn1:
       new_val = st.number_input(
-          "تحديد رصيد جديد كلياً:", min_value=0.0, step=0.5
+          "تحديد رصيد Opal's جديد كلياً:", min_value=0.0, step=0.5
       )
       if st.button("✏️ حفظ الرصيد الجديد"):
         conn = get_connection()
@@ -247,7 +268,9 @@ with tab4:
         )
         conn.commit()
         conn.close()
-        st.success(f"تم تغيير رصيد {selected_member} إلى {new_val:g} أوبلز.")
+        st.success(
+            f"تم تغيير رصيد {selected_member} إلى {new_val:g} Opal's بنجاح."
+        )
         st.rerun()
 
     with col_btn2:
@@ -261,4 +284,4 @@ with tab4:
         st.rerun()
   else:
     st.info("لا يوجد أعضاء في القائمة حالياً.")
-          
+      
