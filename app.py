@@ -74,22 +74,37 @@ def get_rank(oplz, role="عضو"):
       return "🌱 ROOKIE (الوافد)"
 
 
-# 4. دالة الخط العربي المتطور وضبط تشكيل الحروف لمنع طيران الأحرف
+# 4. تحميل وتأكيد صحة ملف الخط العربي
 def get_font(size):
   font_path = "Cairo-Bold.ttf"
+
+  # حذف الملف إذا كان تالفاً (حجمه أقل من 10 كيلو بايت)
+  if os.path.exists(font_path) and os.path.getsize(font_path) < 10000:
+    os.remove(font_path)
+
+  # تنزيل الخط الأصلي المباشر
   if not os.path.exists(font_path):
-    url = "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo-Bold.ttf"
-    r = requests.get(url)
-    with open(font_path, "wb") as f:
-      f.write(r.content)
-  return ImageFont.truetype(font_path, size)
+    url = "https://raw.githubusercontent.com/google/fonts/main/ofl/cairo/static/Cairo-Bold.ttf"
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        )
+    }
+    r = requests.get(url, headers=headers)
+    if r.status_code == 200:
+      with open(font_path, "wb") as f:
+        f.write(r.content)
+
+  try:
+    return ImageFont.truetype(font_path, size)
+  except Exception:
+    if os.path.exists(font_path):
+      os.remove(font_path)
+    return ImageFont.load_default()
 
 
-# ضبط المحرك لمنع الدمج المعقد الذي يسبب اختفاء الحروف
-reshaper_config = {
-    "delete_harakat": True,
-    "support_ligatures": False,  # يمنع اختفاء الأحرف المركبة مثل (لا، لأ، إ، آ)
-}
+# ضبط التشكيل لمنع اختفاء/طيران الحروف
+reshaper_config = {"delete_harakat": True, "support_ligatures": False}
 reshaper = ArabicReshaper(configuration=reshaper_config)
 
 
@@ -136,7 +151,6 @@ def generate_leaderboard_image(df):
     name, oplz, role = row[0], row[1], row[2]
     rank_title = get_rank(oplz, role)
 
-    # ألوان مراكز الصدارة
     bg_color = "#1E293B"
     text_color = "#FFFFFF"
     rank_icon = f"#{rank}"
@@ -166,7 +180,6 @@ def generate_leaderboard_image(df):
     name_str = f"{name} {tag_str}"
     score_str = f"{oplz:g} Opal's  |  {rank_title}"
 
-    # كتابة البيانات
     draw.text(
         (width - 50, y_offset + 35),
         rank_icon,
@@ -227,13 +240,9 @@ with tab1:
   if not df.empty:
     st.subheader("🖼️ بطاقة الحسبة جاهزة للحفظ:")
 
-    # توليد الصورة فوراً
     img_bytes = generate_leaderboard_image(df)
-
-    # عرض الصورة بحجم كامل ومناسب للموبايل
     st.image(img_bytes, use_container_width=True)
 
-    # زر التحميل السريع
     st.download_button(
         label="📥 ضغطة واحدة لحفظ الصورة على جهازك",
         data=img_bytes,
@@ -326,4 +335,4 @@ with tab3:
         conn.commit()
         conn.close()
         st.rerun()
-    
+          
