@@ -2,7 +2,6 @@ import io
 import os
 import sqlite3
 import arabic_reshaper
-from arabic_reshaper import ArabicReshaper
 from bidi.algorithm import get_display
 import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
@@ -52,66 +51,55 @@ init_db()
 def get_rank(oplz, role="عضو"):
   if role == "إداري":
     if oplz >= 800:
-      return "⚔️ LEADER (القائد)"
+      return "⚔️ LEADER - القائد"
     elif oplz >= 500:
-      return "📊 OPAL'S MANAGER (مسؤول النقاط)"
+      return "📊 MANAGER - مسؤول النقاط"
     elif oplz >= 300:
-      return "🔰 MODERATOR (المشرف العام)"
+      return "🔰 MODERATOR - المشرف العام"
     elif oplz >= 150:
-      return "🎭 HOST (المضيف)"
+      return "🎭 HOST - المضيف"
     elif oplz >= 75:
-      return "⚡ ADMIN (الإداري)"
+      return "⚡ ADMIN - الإداري"
     else:
-      return "❇️ NEW ADMIN (إداري مستجد)"
+      return "❇️ NEW ADMIN - إداري مستجد"
   else:
     if oplz >= 500:
-      return "🏆 LEGEND (الأسطورة)"
+      return "🏆 LEGEND - الأسطورة"
     elif oplz >= 200:
-      return "🌟 ELITE (النخبة)"
+      return "🌟 ELITE - النخبة"
     elif oplz >= 50:
-      return "🔥 ACTIVE (المتفاعل)"
+      return "🔥 ACTIVE - المتفاعل"
     else:
-      return "🌱 ROOKIE (الوافد)"
+      return "🌱 ROOKIE - الوافد"
 
 
-# 4. تحميل وتأكيد صحة ملف الخط العربي
+# 4. دالة الخط العربي المتوافق
 def get_font(size):
   font_path = "Cairo-Bold.ttf"
 
-  # حذف الملف إذا كان تالفاً (حجمه أقل من 10 كيلو بايت)
   if os.path.exists(font_path) and os.path.getsize(font_path) < 10000:
     os.remove(font_path)
 
-  # تنزيل الخط الأصلي المباشر
   if not os.path.exists(font_path):
     url = "https://raw.githubusercontent.com/google/fonts/main/ofl/cairo/static/Cairo-Bold.ttf"
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        )
-    }
-    r = requests.get(url, headers=headers)
-    if r.status_code == 200:
-      with open(font_path, "wb") as f:
-        f.write(r.content)
+    try:
+      r = requests.get(url, timeout=10)
+      if r.status_code == 200:
+        with open(font_path, "wb") as f:
+          f.write(r.content)
+    except Exception:
+      pass
 
   try:
     return ImageFont.truetype(font_path, size)
   except Exception:
-    if os.path.exists(font_path):
-      os.remove(font_path)
     return ImageFont.load_default()
-
-
-# ضبط التشكيل لمنع اختفاء/طيران الحروف
-reshaper_config = {"delete_harakat": True, "support_ligatures": False}
-reshaper = ArabicReshaper(configuration=reshaper_config)
 
 
 def fix_arabic(text):
   if not text:
     return ""
-  reshaped = reshaper.reshape(str(text))
+  reshaped = arabic_reshaper.reshape(str(text))
   return get_display(reshaped)
 
 
@@ -124,7 +112,7 @@ def generate_leaderboard_image(df):
   img = Image.new("RGB", (width, height), color="#0F172A")
   draw = ImageDraw.Draw(img)
 
-  font_title = get_font(36)
+  font_title = get_font(34)
   font_sub = get_font(20)
   font_card = get_font(22)
 
@@ -132,14 +120,14 @@ def generate_leaderboard_image(df):
   draw.rectangle([0, 0, width, 115], fill="#1E293B")
   draw.text(
       (width / 2, 38),
-      fix_arabic("✨ Opal's System | حسبة الترتيب ✨"),
+      fix_arabic("✨ حسبة ونقاط نظام Opal's ✨"),
       fill="#4DEF8E",
       font=font_title,
       anchor="mm",
   )
   draw.text(
       (width / 2, 85),
-      fix_arabic("👑 Aurther  |  🤝 Lamino"),
+      fix_arabic("👑 المشرف: Aurther   |   🤝 المساعد: Lamino"),
       fill="#94A3B8",
       font=font_sub,
       anchor="mm",
@@ -148,7 +136,7 @@ def generate_leaderboard_image(df):
   # رسم صفوف الأعضاء
   y_offset = 135
   for rank, row in enumerate(df.itertuples(index=False), start=1):
-    name, oplz, role = row[0], row[1], row[2]
+    name, oplz, role = str(row[0]), float(row[1]), str(row[2])
     rank_title = get_rank(oplz, role)
 
     bg_color = "#1E293B"
@@ -176,10 +164,9 @@ def generate_leaderboard_image(df):
         width=1,
     )
 
-    tag_str = "[إداري]" if role == "إداري" else "[عضو]"
-    name_str = f"{name} {tag_str}"
-    score_str = f"{oplz:g} Opal's  |  {rank_title}"
+    tag_str = "(إداري)" if role == "إداري" else "(عضو)"
 
+    # رسم الرقم والرمز على اليمين
     draw.text(
         (width - 50, y_offset + 35),
         rank_icon,
@@ -187,16 +174,29 @@ def generate_leaderboard_image(df):
         font=font_card,
         anchor="rm",
     )
+
+    # رسم الاسم والرتبة بالعربي
+    full_name_arabic = fix_arabic(f"{name} {tag_str}")
     draw.text(
         (width - 150, y_offset + 35),
-        fix_arabic(name_str),
+        full_name_arabic,
         fill="#F8FAFC",
         font=font_card,
         anchor="rm",
     )
+
+    # رسم النقاط والرتبة على اليسار بشكل مستقل لمنع التشابك
+    score_text = f"{oplz:g} Opal's  |"
     draw.text(
         (50, y_offset + 35),
-        fix_arabic(score_str),
+        score_text,
+        fill=text_color,
+        font=font_card,
+        anchor="lm",
+    )
+    draw.text(
+        (220, y_offset + 35),
+        fix_arabic(rank_title),
         fill=text_color,
         font=font_card,
         anchor="lm",
@@ -335,4 +335,4 @@ with tab3:
         conn.commit()
         conn.close()
         st.rerun()
-          
+    
