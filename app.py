@@ -106,13 +106,12 @@ tab1, tab2, tab3, tab4 = st.tabs([
 with tab1:
   conn = get_connection()
   df = pd.read_sql_query(
-      "SELECT name AS 'العضو', oplz AS 'Opal\'s' FROM members ORDER BY oplz"
-      " DESC",
-      conn,
+      "SELECT name, oplz FROM members ORDER BY oplz DESC", conn
   )
   conn.close()
 
   if not df.empty:
+    df.columns = ["العضو", "Opal's"]
     df["الرتبة"] = df["Opal's"].apply(get_rank)
 
     col1, col2, col3 = st.columns(3)
@@ -284,4 +283,3 @@ with tab4:
         st.rerun()
   else:
     st.info("لا يوجد أعضاء في القائمة حالياً.")
-      
