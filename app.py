@@ -1,11 +1,11 @@
 import io
 import os
 import sqlite3
+import urllib.request
 import arabic_reshaper
 from bidi.algorithm import get_display
 import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
-import requests
 import streamlit as st
 
 # 1. إعدادات الصفحة
@@ -48,45 +48,71 @@ init_db()
 
 
 # 3. حساب الرتب
-def get_rank(oplz, role="عضو"):
+def get_rank_ui(oplz, role="عضو"):
   if role == "إداري":
     if oplz >= 800:
-      return "⚔️ LEADER - القائد"
+      return "⚔️ LEADER (القائد)"
     elif oplz >= 500:
-      return "📊 MANAGER - مسؤول النقاط"
+      return "📊 OPAL'S MANAGER (مسؤول النقاط)"
     elif oplz >= 300:
-      return "🔰 MODERATOR - المشرف العام"
+      return "🔰 MODERATOR (المشرف العام)"
     elif oplz >= 150:
-      return "🎭 HOST - المضيف"
+      return "🎭 HOST (المضيف)"
     elif oplz >= 75:
-      return "⚡ ADMIN - الإداري"
+      return "⚡ ADMIN (الإداري)"
     else:
-      return "❇️ NEW ADMIN - إداري مستجد"
+      return "❇️ NEW ADMIN (إداري مستجد)"
   else:
     if oplz >= 500:
-      return "🏆 LEGEND - الأسطورة"
+      return "🏆 LEGEND (الأسطورة)"
     elif oplz >= 200:
-      return "🌟 ELITE - النخبة"
+      return "🌟 ELITE (النخبة)"
     elif oplz >= 50:
-      return "🔥 ACTIVE - المتفاعل"
+      return "🔥 ACTIVE (المتفاعل)"
     else:
-      return "🌱 ROOKIE - الوافد"
+      return "🌱 ROOKIE (الوافد)"
 
 
-# 4. دالة الخط العربي المتوافق
+def get_rank_img(oplz, role="عضو"):
+  if role == "إداري":
+    if oplz >= 800:
+      return "LEADER - القائد"
+    elif oplz >= 500:
+      return "OPAL'S MANAGER - مسؤول النقاط"
+    elif oplz >= 300:
+      return "MODERATOR - المشرف العام"
+    elif oplz >= 150:
+      return "HOST - المضيف"
+    elif oplz >= 75:
+      return "ADMIN - الإداري"
+    else:
+      return "NEW ADMIN - إداري مستجد"
+  else:
+    if oplz >= 500:
+      return "LEGEND - الأسطورة"
+    elif oplz >= 200:
+      return "ELITE - النخبة"
+    elif oplz >= 50:
+      return "ACTIVE - المتفاعل"
+    else:
+      return "ROOKIE - الوافد"
+
+
+# 4. تحميل خط عربي مضمون
 def get_font(size):
-  font_path = "Cairo-Bold.ttf"
+  font_path = "Tajawal-Bold.ttf"
 
-  if os.path.exists(font_path) and os.path.getsize(font_path) < 10000:
-    os.remove(font_path)
-
-  if not os.path.exists(font_path):
-    url = "https://raw.githubusercontent.com/google/fonts/main/ofl/cairo/static/Cairo-Bold.ttf"
+  if not os.path.exists(font_path) or os.path.getsize(font_path) < 10000:
+    url = "https://github.com/google/fonts/raw/main/ofl/tajawal/Tajawal-Bold.ttf"
     try:
-      r = requests.get(url, timeout=10)
-      if r.status_code == 200:
-        with open(font_path, "wb") as f:
-          f.write(r.content)
+      req = urllib.request.Request(
+          url, headers={"User-Agent": "Mozilla/5.0"}
+      )
+      with (
+          urllib.request.urlopen(req) as response,
+          open(font_path, "wb") as out_file,
+      ):
+        out_file.write(response.read())
     except Exception:
       pass
 
@@ -103,7 +129,7 @@ def fix_arabic(text):
   return get_display(reshaped)
 
 
-# 5. دالة رسم بطاقة الحسبة كصورة عالية الدقة
+# 5. رسم صورة بطاقة الترتيب بدون إيموجيات داخل الرسم
 def generate_leaderboard_image(df):
   width = 900
   height = 160 + (len(df) * 85)
@@ -120,14 +146,14 @@ def generate_leaderboard_image(df):
   draw.rectangle([0, 0, width, 115], fill="#1E293B")
   draw.text(
       (width / 2, 38),
-      fix_arabic("✨ حسبة ونقاط نظام Opal's ✨"),
+      fix_arabic("حسبة ونقاط نظام Opal's System"),
       fill="#4DEF8E",
       font=font_title,
       anchor="mm",
   )
   draw.text(
       (width / 2, 85),
-      fix_arabic("👑 المشرف: Aurther   |   🤝 المساعد: Lamino"),
+      fix_arabic("المشرف: Aurther   |   المساعد: Lamino"),
       fill="#94A3B8",
       font=font_sub,
       anchor="mm",
@@ -137,24 +163,24 @@ def generate_leaderboard_image(df):
   y_offset = 135
   for rank, row in enumerate(df.itertuples(index=False), start=1):
     name, oplz, role = str(row[0]), float(row[1]), str(row[2])
-    rank_title = get_rank(oplz, role)
+    rank_title = get_rank_img(oplz, role)
 
     bg_color = "#1E293B"
     text_color = "#FFFFFF"
-    rank_icon = f"#{rank}"
+    rank_str = f"#{rank}"
 
     if rank == 1:
       bg_color = "#3B270C"
       text_color = "#FFD700"
-      rank_icon = "🥇 #1"
+      rank_str = "#1 TOP"
     elif rank == 2:
       bg_color = "#28303D"
       text_color = "#C0C0C0"
-      rank_icon = "🥈 #2"
+      rank_str = "#2 TOP"
     elif rank == 3:
       bg_color = "#33221A"
       text_color = "#CD7F32"
-      rank_icon = "🥉 #3"
+      rank_str = "#3 TOP"
 
     draw.rounded_rectangle(
         [30, y_offset, width - 30, y_offset + 70],
@@ -166,26 +192,26 @@ def generate_leaderboard_image(df):
 
     tag_str = "(إداري)" if role == "إداري" else "(عضو)"
 
-    # رسم الرقم والرمز على اليمين
+    # رقم المركز
     draw.text(
         (width - 50, y_offset + 35),
-        rank_icon,
+        rank_str,
         fill=text_color,
         font=font_card,
         anchor="rm",
     )
 
-    # رسم الاسم والرتبة بالعربي
+    # الاسم والصفة
     full_name_arabic = fix_arabic(f"{name} {tag_str}")
     draw.text(
-        (width - 150, y_offset + 35),
+        (width - 160, y_offset + 35),
         full_name_arabic,
         fill="#F8FAFC",
         font=font_card,
         anchor="rm",
     )
 
-    # رسم النقاط والرتبة على اليسار بشكل مستقل لمنع التشابك
+    # النقاط والرتبة
     score_text = f"{oplz:g} Opal's  |"
     draw.text(
         (50, y_offset + 35),
@@ -229,7 +255,7 @@ tab1, tab2, tab3 = st.tabs(
     ["📸 صورة الحسبة والترتيب", "➕ إضافة / تعديل نقاط", "⚙️ إدارة الأعضاء"]
 )
 
-# --- التبويب الأول: الصورة الجاهزة مباشرة للحفظ ---
+# --- التبويب الأول ---
 with tab1:
   conn = get_connection()
   df = pd.read_sql_query(
@@ -253,7 +279,7 @@ with tab1:
   else:
     st.info("💡 لا يوجد أعضاء مسجلين حتى الآن. قم بإضافة النقاط من التبويب الثاني.")
 
-# --- التبويب الثاني: إضافة وتعديل النقاط ---
+# --- التبويب الثاني ---
 with tab2:
   st.subheader("تسجيل النقاط")
 
@@ -301,7 +327,7 @@ with tab2:
         st.success(f"✅ تم إضافة {val_input:g} Opal's لـ {clean_name}")
         st.rerun()
 
-# --- التبويب الثالث: تعديل وحذف ---
+# --- التبويب الثالث ---
 with tab3:
   conn = get_connection()
   df_m = pd.read_sql_query("SELECT name, role, oplz FROM members", conn)
