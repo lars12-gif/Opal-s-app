@@ -2,6 +2,7 @@ import io
 import os
 import sqlite3
 import arabic_reshaper
+from arabic_reshaper import ArabicReshaper
 from bidi.algorithm import get_display
 import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
@@ -73,26 +74,36 @@ def get_rank(oplz, role="عضو"):
       return "🌱 ROOKIE (الوافد)"
 
 
-# 4. دالة الخط العربي وتنسيق النصوص
+# 4. دالة الخط العربي المتطور وضبط تشكيل الحروف لمنع طيران الأحرف
 def get_font(size):
-  font_path = "Tajawal-Bold.ttf"
+  font_path = "Cairo-Bold.ttf"
   if not os.path.exists(font_path):
-    url = "https://github.com/google/fonts/raw/main/ofl/tajawal/Tajawal-Bold.ttf"
+    url = "https://github.com/google/fonts/raw/main/ofl/cairo/Cairo-Bold.ttf"
     r = requests.get(url)
     with open(font_path, "wb") as f:
       f.write(r.content)
   return ImageFont.truetype(font_path, size)
 
 
+# ضبط المحرك لمنع الدمج المعقد الذي يسبب اختفاء الحروف
+reshaper_config = {
+    "delete_harakat": True,
+    "support_ligatures": False,  # يمنع اختفاء الأحرف المركبة مثل (لا، لأ، إ، آ)
+}
+reshaper = ArabicReshaper(configuration=reshaper_config)
+
+
 def fix_arabic(text):
-  reshaped = arabic_reshaper.reshape(str(text))
+  if not text:
+    return ""
+  reshaped = reshaper.reshape(str(text))
   return get_display(reshaped)
 
 
-# 5. دالة رسم بطاقة الحسبة مباشرة كصورة
+# 5. دالة رسم بطاقة الحسبة كصورة عالية الدقة
 def generate_leaderboard_image(df):
-  width = 850
-  height = 150 + (len(df) * 80)
+  width = 900
+  height = 160 + (len(df) * 85)
   height = max(height, 450)
 
   img = Image.new("RGB", (width, height), color="#0F172A")
@@ -103,16 +114,16 @@ def generate_leaderboard_image(df):
   font_card = get_font(22)
 
   # الهيدر العلوي
-  draw.rectangle([0, 0, width, 110], fill="#1E293B")
+  draw.rectangle([0, 0, width, 115], fill="#1E293B")
   draw.text(
-      (width / 2, 35),
+      (width / 2, 38),
       fix_arabic("✨ Opal's System | حسبة الترتيب ✨"),
       fill="#4DEF8E",
       font=font_title,
       anchor="mm",
   )
   draw.text(
-      (width / 2, 80),
+      (width / 2, 85),
       fix_arabic("👑 Aurther  |  🤝 Lamino"),
       fill="#94A3B8",
       font=font_sub,
@@ -120,7 +131,7 @@ def generate_leaderboard_image(df):
   )
 
   # رسم صفوف الأعضاء
-  y_offset = 130
+  y_offset = 135
   for rank, row in enumerate(df.itertuples(index=False), start=1):
     name, oplz, role = row[0], row[1], row[2]
     rank_title = get_rank(oplz, role)
@@ -144,7 +155,7 @@ def generate_leaderboard_image(df):
       rank_icon = "🥉 #3"
 
     draw.rounded_rectangle(
-        [30, y_offset, width - 30, y_offset + 65],
+        [30, y_offset, width - 30, y_offset + 70],
         radius=10,
         fill=bg_color,
         outline="#334155",
@@ -155,30 +166,30 @@ def generate_leaderboard_image(df):
     name_str = f"{name} {tag_str}"
     score_str = f"{oplz:g} Opal's  |  {rank_title}"
 
-    # كتابة المركز والاسم على اليمين والنقاط على اليسار
+    # كتابة البيانات
     draw.text(
-        (width - 50, y_offset + 32),
+        (width - 50, y_offset + 35),
         rank_icon,
         fill=text_color,
         font=font_card,
         anchor="rm",
     )
     draw.text(
-        (width - 150, y_offset + 32),
+        (width - 150, y_offset + 35),
         fix_arabic(name_str),
         fill="#F8FAFC",
         font=font_card,
         anchor="rm",
     )
     draw.text(
-        (50, y_offset + 32),
+        (50, y_offset + 35),
         fix_arabic(score_str),
         fill=text_color,
         font=font_card,
         anchor="lm",
     )
 
-    y_offset += 75
+    y_offset += 85
 
   img_byte_arr = io.BytesIO()
   img.save(img_byte_arr, format="PNG")
@@ -219,7 +230,7 @@ with tab1:
     # توليد الصورة فوراً
     img_bytes = generate_leaderboard_image(df)
 
-    # عرض الصورة بحجم متوافق مع كافة الشاشات
+    # عرض الصورة بحجم كامل ومناسب للموبايل
     st.image(img_bytes, use_container_width=True)
 
     # زر التحميل السريع
@@ -231,7 +242,7 @@ with tab1:
         use_container_width=True,
     )
   else:
-    st.info("💡 لا يوجد أعضاء مسجلين حتى الآن. قم بفيض النقاط من التبويب الثاني.")
+    st.info("💡 لا يوجد أعضاء مسجلين حتى الآن. قم بإضافة النقاط من التبويب الثاني.")
 
 # --- التبويب الثاني: إضافة وتعديل النقاط ---
 with tab2:
@@ -315,4 +326,4 @@ with tab3:
         conn.commit()
         conn.close()
         st.rerun()
-      
+    
