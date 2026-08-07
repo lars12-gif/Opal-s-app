@@ -1,3 +1,4 @@
+import math
 import sqlite3
 import pandas as pd
 import streamlit as st
@@ -68,7 +69,7 @@ def get_rank(oplz, role="عضو"):
       return "🌱 ROOKIE (الوافد)"
 
 
-# 4. توليد كود HTML لتصميم بطاقة الترتيب ورسمها كصورة نقية
+# 4. تصميم بطاقة أفقية عريضة (Landscape Mode)
 def create_html_card(df):
   rows_html = ""
 
@@ -103,8 +104,10 @@ def create_html_card(df):
         <div class="member-card {rank_class}">
             <div class="right-section">
                 <span class="badge {badge_class}">{badge_text}</span>
-                <span class="member-name">{name}</span>
-                {role_tag}
+                <div class="name-box">
+                    <span class="member-name">{name}</span>
+                    {role_tag}
+                </div>
             </div>
             <div class="left-section">
                 <span class="points">{oplz:g} Opal's</span>
@@ -129,20 +132,31 @@ def create_html_card(df):
           border: 2px solid #334155;
           border-radius: 20px;
           padding: 25px;
-          max-width: 800px;
+          max-width: 950px;
           margin: 0 auto;
           box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }}
-        .header {{ text-align: center; margin-bottom: 25px; }}
-        .title {{ color: #4DEF8E; font-size: 26px; font-weight: 900; margin-bottom: 10px; }}
+        .header {{ 
+          display: flex; 
+          justify-content: space-between; 
+          align-items: center; 
+          border-bottom: 2px solid #334155; 
+          padding-bottom: 15px; 
+          margin-bottom: 20px; 
+        }}
+        .title {{ color: #4DEF8E; font-size: 22px; font-weight: 900; }}
         .admin-box {{
-          display: inline-block;
           background: #1E293B;
           border: 1px solid #334155;
           padding: 6px 18px;
           border-radius: 25px;
-          font-size: 14px;
+          font-size: 13px;
           color: #CBD5E1;
+        }}
+        .grid-container {{
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
         }}
         .member-card {{
           display: flex;
@@ -150,35 +164,36 @@ def create_html_card(df):
           align-items: center;
           background: #1E293B;
           border: 1px solid #334155;
-          border-radius: 14px;
-          padding: 14px 20px;
-          margin-bottom: 12px;
+          border-radius: 12px;
+          padding: 10px 16px;
         }}
         .rank-1 {{ background: linear-gradient(90deg, #3B270C 0%, #1E293B 100%); border-color: #FFD700; }}
         .rank-2 {{ background: linear-gradient(90deg, #28303D 0%, #1E293B 100%); border-color: #C0C0C0; }}
         .rank-3 {{ background: linear-gradient(90deg, #33221A 0%, #1E293B 100%); border-color: #CD7F32; }}
         
-        .right-section {{ display: flex; align-items: center; gap: 12px; }}
+        .right-section {{ display: flex; align-items: center; gap: 10px; }}
         .badge {{
           font-weight: 900;
-          font-size: 15px;
-          padding: 4px 12px;
-          border-radius: 8px;
+          font-size: 13px;
+          padding: 4px 8px;
+          border-radius: 6px;
           background: #334155;
           color: #FFF;
+          white-space: nowrap;
         }}
         .b-1 {{ background: #FFD700; color: #000; }}
         .b-2 {{ background: #C0C0C0; color: #000; }}
         .b-3 {{ background: #CD7F32; color: #FFF; }}
         
-        .member-name {{ font-size: 18px; font-weight: 700; color: #F8FAFC; }}
-        .role-tag {{ font-size: 12px; padding: 2px 8px; border-radius: 6px; margin-right: 6px; }}
+        .name-box {{ display: flex; flex-direction: column; gap: 2px; }}
+        .member-name {{ font-size: 15px; font-weight: 700; color: #F8FAFC; line-height: 1.2; }}
+        .role-tag {{ font-size: 10px; padding: 1px 6px; border-radius: 4px; width: fit-content; }}
         .tag-admin {{ background: #0284C7; color: #FFF; }}
         .tag-user {{ background: #334155; color: #94A3B8; }}
         
-        .left-section {{ display: flex; align-items: center; gap: 12px; }}
-        .points {{ color: #4DEF8E; font-weight: 700; font-size: 16px; }}
-        .rank-title {{ color: #E2E8F0; font-size: 14px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px; }}
+        .left-section {{ display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }}
+        .points {{ color: #4DEF8E; font-weight: 700; font-size: 14px; }}
+        .rank-title {{ color: #CBD5E1; font-size: 11px; }}
         
         .btn-container {{ text-align: center; margin-top: 20px; }}
         .dl-btn {{
@@ -195,6 +210,11 @@ def create_html_card(df):
           max-width: 400px;
         }}
         .dl-btn:hover {{ background: #3be07d; }}
+
+        @media (max-width: 600px) {{
+          .grid-container {{ grid-template-columns: 1fr; }}
+          .header {{ flex-direction: column; gap: 10px; }}
+        }}
       </style>
     </head>
     <body>
@@ -203,7 +223,9 @@ def create_html_card(df):
           <div class="title">✨ حسبة ونقاط نظام Opal's System ✨</div>
           <div class="admin-box">👑 <b>المشرف:</b> Aurther &nbsp;|&nbsp; 🤝 <b>المساعد:</b> Lamino</div>
         </div>
-        {rows_html}
+        <div class="grid-container">
+            {rows_html}
+        </div>
       </div>
 
       <div class="btn-container">
@@ -261,7 +283,7 @@ with tab1:
 
   if not df.empty:
     html_content = create_html_card(df)
-    card_height = 250 + (len(df) * 80)
+    card_height = 200 + (math.ceil(len(df) / 2) * 85)
     components.html(html_content, height=card_height, scrolling=True)
   else:
     st.info("💡 لا يوجد أعضاء مسجلين حتى الآن. قم بإضافة النقاط من التبويب الثاني.")
@@ -348,4 +370,4 @@ with tab3:
         conn.commit()
         conn.close()
         st.rerun()
-      
+    
