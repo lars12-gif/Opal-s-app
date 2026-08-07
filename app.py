@@ -5,20 +5,44 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 # 1. كلمة السر الخاصة بالإدارة
-ADMIN_PASSWORD = "سمج نوتيلا"
+ADMIN_PASSWORD = "iraq2026"
 
 # 2. إعدادات الصفحة
 st.set_page_config(
     page_title="BELLONA | نظام نقاط Opal's", page_icon="🌸", layout="centered"
 )
 
-# 3. محرك الصوت والبارتكلز والتفاعل المباشر
+# 3. محرك الموسيقى التلقائية (Autoplay) + البارتكلز + الأصوات
+# 💡 غير رابط الموسيقى (src) أدناه برابط الأغنية الخاص بك
 components.html(
     """
+    <audio id="bgm-audio" loop src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3"></audio>
+
     <script>
     (function() {
         const pDoc = window.parent.document;
-        
+        const audio = document.getElementById('bgm-audio');
+
+        // محاولة تشغيل الأغنية تلقائياً بلمسة ذكية
+        if (audio) {
+            audio.volume = 0.4; // مستوى صوت هادئ ومريح
+            let playPromise = audio.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                    // في حال حظر المتصفح الصوت التلقائي، تشغل فوراً عند أول لمسة للشاشة
+                    const playOnInteraction = function() {
+                        audio.play();
+                        pDoc.removeEventListener('click', playOnInteraction);
+                        pDoc.removeEventListener('touchstart', playOnInteraction);
+                    };
+                    pDoc.addEventListener('click', playOnInteraction);
+                    pDoc.addEventListener('touchstart', playOnInteraction);
+                });
+            }
+        }
+
+        // تأثيرات أصوات النقر والبارتكلز
         let audioCtx = null;
         function playPopSound() {
             try {
@@ -35,7 +59,7 @@ components.html(
                 osc.frequency.setValueAtTime(700, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(1400, audioCtx.currentTime + 0.08);
                 
-                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
                 
                 osc.connect(gain);
@@ -87,7 +111,7 @@ components.html(
     height=0,
 )
 
-# 4. تنسيقات الـ CSS وتصاميم الواجهة
+# 4. تنسيقات الـ CSS للواجهة
 st.markdown(
     """
     <style>
@@ -592,35 +616,4 @@ with tab3:
       col_a, col_b = st.columns(2)
       with col_a:
         new_val = st.number_input(
-            "تعديل الرصيد:", value=float(curr["oplz"]), step=0.5
-        )
-        if st.button("✏️ تحديث الرصيد"):
-          conn = get_connection()
-          c = conn.cursor()
-          c.execute(
-              "UPDATE members SET oplz = ? WHERE name = ?", (new_val, selected)
-          )
-          conn.commit()
-          conn.close()
-          st.success("تم التحديث!")
-          st.rerun()
-
-      with col_b:
-        if st.button(f"❌ حذف {selected}"):
-          conn = get_connection()
-          c = conn.cursor()
-          c.execute("DELETE FROM members WHERE name = ?", (selected,))
-          conn.commit()
-          conn.close()
-          st.rerun()
-    else:
-      st.info("💡 لا يوجد أعضاء مسجلين للحذف أو التعديل.")
-  else:
-    if pwd_tab3:
-      st.error("❌ كلمة السر غير صحيحة!")
-    else:
-      st.warning(
-          "🔒 هذه المنطقة محمية. يرجى إدخال كلمة سر الإدارة لتعديل أو حذف"
-          " الأعضاء."
-        )
-        
+            "تعديل الرصيد:", value=float(curr["o
