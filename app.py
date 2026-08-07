@@ -12,7 +12,7 @@ st.set_page_config(
     page_title="BELLONA | نظام نقاط Opal's", page_icon="🌸", layout="centered"
 )
 
-# تخصيص التصميم والأنيميشن الخاص بتساقط أوراق الساكورا والألوان الزهرية
+# تخصيص التصميم والأنيميشن الخاص بتساقط أوراق الساكورا والأصوات والبارتكلز
 st.markdown(
     """
     <style>
@@ -58,55 +58,105 @@ st.markdown(
     .p5 { left: 75%; width: 14px; height: 17px; animation-duration: 10s; animation-delay: 0.5s; }
     .p6 { left: 90%; width: 9px; height: 13px; animation-duration: 7.5s; animation-delay: 2.5s; }
 
-    /* العناوين والبطاقات */
+    /* العناوين والبطاقات الرئيسية */
     .main-title {
         text-align: center;
         color: #D81B60;
         font-weight: 900;
-        font-size: 2.3rem;
+        font-size: 2.4rem;
         margin-bottom: 5px;
-        text-shadow: 0px 2px 10px rgba(216, 27, 96, 0.15);
+        text-shadow: 0px 3px 12px rgba(216, 27, 96, 0.2);
     }
     .bellona-sub {
         text-align: center;
         color: #C2185B;
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         font-weight: 700;
         margin-bottom: 15px;
         letter-spacing: 2px;
     }
     .admin-info {
         text-align: center;
-        background-color: rgba(255, 255, 255, 0.85);
-        border-radius: 15px;
-        padding: 12px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 18px;
+        padding: 14px;
         margin-bottom: 25px;
         border: 2px solid #FFB7C5;
-        box-shadow: 0 4px 15px rgba(255, 183, 197, 0.3);
+        box-shadow: 0 6px 20px rgba(255, 183, 197, 0.35);
     }
     .admin-badge {
         display: inline-block;
         margin: 0 10px;
-        font-size: 1.05rem;
+        font-size: 1.1rem;
         color: #880E4F;
-        font-weight: 700;
+        font-weight: 800;
     }
     
-    /* تخصيص التبويبات */
+    /* 🌸 تحسين مظهر التبويبات وقوائم الخيارات بالكامل 🌸 */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: rgba(255, 255, 255, 0.6);
-        padding: 6px;
-        border-radius: 12px;
+        gap: 10px;
+        background: linear-gradient(135deg, #FFF0F5 0%, #FFE4E1 100%);
+        padding: 10px 12px;
+        border-radius: 20px;
+        border: 2px solid #FF80AB;
+        box-shadow: 0 6px 20px rgba(216, 27, 96, 0.12);
+        justify-content: center;
     }
+    
     .stTabs [data-baseweb="tab"] {
-        border-radius: 8px;
-        color: #C2185B;
-        font-weight: 700;
+        border-radius: 12px !important;
+        background-color: #FFFFFF !important;
+        color: #C2185B !important;
+        font-weight: 800 !important;
+        border: 1.5px solid #FFC1E3 !important;
+        padding: 10px 20px !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        transition: all 0.25s ease-in-out;
     }
+
+    .stTabs [data-baseweb="tab"]:hover {
+        background-color: #FFF0F5 !important;
+        border-color: #D81B60 !important;
+        transform: translateY(-2px);
+    }
+    
     .stTabs [aria-selected="true"] {
-        background-color: #D81B60 !important;
-        color: white !important;
+        background: linear-gradient(135deg, #EC407A 0%, #D81B60 100%) !important;
+        color: #FFFFFF !important;
+        border: 1.5px solid #D81B60 !important;
+        box-shadow: 0 5px 15px rgba(216, 27, 96, 0.4) !important;
+        transform: translateY(-2px);
+    }
+
+    /* خلفية كارت صلبة لمحتوى كل تبويب لبروز النصوص */
+    div[data-baseweb="tab-panel"] {
+        background: rgba(255, 255, 255, 0.95);
+        border: 2px solid #FFC1E3;
+        border-radius: 22px;
+        padding: 25px;
+        margin-top: 15px;
+        box-shadow: 0 10px 30px rgba(216, 27, 96, 0.1);
+    }
+
+    /* تصميم جسيمات الضغط (Click Sparkles) */
+    .click-sparkle {
+        position: fixed;
+        pointer-events: none;
+        z-index: 99999;
+        font-size: 18px;
+        user-select: none;
+        animation: burstOut 0.7s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
+
+    @keyframes burstOut {
+        0% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(0.5) rotate(0deg);
+        }
+        100% {
+            opacity: 0;
+            transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.4) rotate(var(--rot));
+        }
     }
     </style>
     
@@ -119,6 +169,67 @@ st.markdown(
         <div class="petal p5"></div>
         <div class="petal p6"></div>
     </div>
+
+    <!-- سكربت تفاعل النقر + الأصوات + الجسيمات الملونة -->
+    <script>
+    let audioCtx = null;
+
+    function playClickPop() {
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(650, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1300, audioCtx.currentTime + 0.07);
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.07);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.07);
+        } catch(e){}
+    }
+
+    document.addEventListener('click', function(e) {
+        playClickPop();
+
+        const symbols = ['🌸', '✨', '🌺', '💖', '✨'];
+        const count = 6;
+        
+        for (let i = 0; i < count; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'click-sparkle';
+            particle.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+            
+            particle.style.left = e.clientX + 'px';
+            particle.style.top = e.clientY + 'px';
+            
+            const destX = (Math.random() - 0.5) * 130;
+            const destY = (Math.random() - 0.5) * 130 - 20;
+            const rot = (Math.random() - 0.5) * 360;
+            
+            particle.style.setProperty('--dx', destX + 'px');
+            particle.style.setProperty('--dy', destY + 'px');
+            particle.style.setProperty('--rot', rot + 'deg');
+            
+            document.body.appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 680);
+        }
+    });
+    </script>
 """,
     unsafe_allow_html=True,
 )
@@ -527,33 +638,4 @@ with tab3:
             "تعديل الرصيد:", value=float(curr["oplz"]), step=0.5
         )
         if st.button("✏️ تحديث الرصيد"):
-          conn = get_connection()
-          c = conn.cursor()
-          c.execute(
-              "UPDATE members SET oplz = ? WHERE name = ?",
-              (new_val, selected),
-          )
-          conn.commit()
-          conn.close()
-          st.success("تم التحديث!")
-          st.rerun()
-
-      with col_b:
-        if st.button(f"❌ حذف {selected}"):
-          conn = get_connection()
-          c = conn.cursor()
-          c.execute("DELETE FROM members WHERE name = ?", (selected,))
-          conn.commit()
-          conn.close()
-          st.rerun()
-    else:
-      st.info("💡 لا يوجد أعضاء مسجلين للحذف أو التعديل.")
-  else:
-    if pwd_tab3:
-      st.error("❌ كلمة السر غير صحيحة!")
-    else:
-      st.warning(
-          "🔒 هذه المنطقة محمية. يرجى إدخال كلمة سر الإدارة لتعديل أو حذف"
-          " الأعضاء."
-      )
-        
+          conn = get_connection
