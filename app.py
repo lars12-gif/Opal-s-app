@@ -249,18 +249,18 @@ DB_NAME = "oplz_data.db"
 
 
 def get_connection():
-  return sqlite3.connect(DB_NAME, check_same_thread=False)
+    return sqlite3.connect(DB_NAME, check_same_thread=False)
 
 
 def init_db():
-  conn = get_connection()
-  c = conn.cursor()
-  c.execute(
-      "CREATE TABLE IF NOT EXISTS members (name TEXT PRIMARY KEY, oplz REAL"
-      " DEFAULT 0, role TEXT DEFAULT 'عضو')"
-  )
-  conn.commit()
-  conn.close()
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute(
+        "CREATE TABLE IF NOT EXISTS members (name TEXT PRIMARY KEY, oplz REAL"
+        " DEFAULT 0, role TEXT DEFAULT 'عضو')"
+    )
+    conn.commit()
+    conn.close()
 
 
 init_db()
@@ -268,62 +268,62 @@ init_db()
 
 # 7. حساب الرتب
 def get_rank(oplz, role="عضو"):
-  if role == "إداري":
-    if oplz >= 800:
-      return "⚔️ LEADER (القائد)"
-    elif oplz >= 500:
-      return "📊 OPAL'S MANAGER (مسؤول النقاط)"
-    elif oplz >= 300:
-      return "🔰 MODERATOR (المشرف العام)"
-    elif oplz >= 150:
-      return "🎭 HOST (المضيف)"
-    elif oplz >= 75:
-      return "⚡ ADMIN (الإداري)"
+    if role == "إداري":
+        if oplz >= 800:
+            return "⚔️ LEADER (القائد)"
+        elif oplz >= 500:
+            return "📊 OPAL'S MANAGER (مسؤول النقاط)"
+        elif oplz >= 300:
+            return "🔰 MODERATOR (المشرف العام)"
+        elif oplz >= 150:
+            return "🎭 HOST (المضيف)"
+        elif oplz >= 75:
+            return "⚡ ADMIN (الإداري)"
+        else:
+            return "❇️ NEW ADMIN (إداري مستجد)"
     else:
-      return "❇️ NEW ADMIN (إداري مستجد)"
-  else:
-    if oplz >= 500:
-      return "🏆 LEGEND (الأسطورة)"
-    elif oplz >= 200:
-      return "🌟 ELITE (النخبة)"
-    elif oplz >= 50:
-      return "🔥 ACTIVE (المتفاعل)"
-    else:
-      return "🌱 ROOKIE (الوافد)"
+        if oplz >= 500:
+            return "🏆 LEGEND (الأسطورة)"
+        elif oplz >= 200:
+            return "🌟 ELITE (النخبة)"
+        elif oplz >= 50:
+            return "🔥 ACTIVE (المتفاعل)"
+        else:
+            return "🌱 ROOKIE (الوافد)"
 
 
 # 8. تصميم بطاقات الترتيب
 def create_html_card(df):
-  rows_html = ""
+    rows_html = ""
 
-  for rank, row in enumerate(df.itertuples(index=False), start=1):
-    name, oplz, role = str(row[0]), float(row[1]), str(row[2])
-    rank_title = get_rank(oplz, role)
+    for rank, row in enumerate(df.itertuples(index=False), start=1):
+        name, oplz, role = str(row[0]), float(row[1]), str(row[2])
+        rank_title = get_rank(oplz, role)
 
-    rank_class = "rank-normal"
-    badge_class = "b-normal"
-    badge_text = f"#{rank}"
+        rank_class = "rank-normal"
+        badge_class = "b-normal"
+        badge_text = f"#{rank}"
 
-    if rank == 1:
-      rank_class = "rank-1"
-      badge_class = "b-1"
-      badge_text = "👑 #1"
-    elif rank == 2:
-      rank_class = "rank-2"
-      badge_class = "b-2"
-      badge_text = "🌸 #2"
-    elif rank == 3:
-      rank_class = "rank-3"
-      badge_class = "b-3"
-      badge_text = "✨ #3"
+        if rank == 1:
+            rank_class = "rank-1"
+            badge_class = "b-1"
+            badge_text = "👑 #1"
+        elif rank == 2:
+            rank_class = "rank-2"
+            badge_class = "b-2"
+            badge_text = "🌸 #2"
+        elif rank == 3:
+            rank_class = "rank-3"
+            badge_class = "b-3"
+            badge_text = "✨ #3"
 
-    role_tag = (
-        '<span class="role-tag tag-admin">🛡️ إداري</span>'
-        if role == "إداري"
-        else '<span class="role-tag tag-user">👥 عضو</span>'
-    )
+        role_tag = (
+            '<span class="role-tag tag-admin">🛡️ إداري</span>'
+            if role == "إداري"
+            else '<span class="role-tag tag-user">👥 عضو</span>'
+        )
 
-    rows_html += f"""
+        rows_html += f"""
         <div class="member-card {rank_class}">
             <div class="right-section">
                 <span class="badge {badge_class}">{badge_text}</span>
@@ -339,7 +339,7 @@ def create_html_card(df):
         </div>
         """
 
-  html_code = f"""
+    html_code = f"""
     <!DOCTYPE html>
     <html lang="ar" dir="rtl">
     <head>
@@ -485,7 +485,7 @@ def create_html_card(df):
     </body>
     </html>
     """
-  return html_code
+    return html_code
 
 
 # 9. الواجهة الرئيسية
@@ -516,111 +516,90 @@ tab1, tab2, tab3 = st.tabs([
 
 # --- التبويب الأول ---
 with tab1:
-  conn = get_connection()
-  df = pd.read_sql_query(
-      "SELECT name, oplz, role FROM members ORDER BY oplz DESC", conn
-  )
-  conn.close()
+    conn = get_connection()
+    df = pd.read_sql_query(
+        "SELECT name, oplz, role FROM members ORDER BY oplz DESC", conn
+    )
+    conn.close()
 
-  if not df.empty:
-    html_content = create_html_card(df)
-    card_height = 220 + (math.ceil(len(df) / 2) * 85)
-    components.html(html_content, height=card_height, scrolling=True)
-  else:
-    st.info("💡 لا يوجد أعضاء مسجلين حتى الآن.")
+    if not df.empty:
+        html_content = create_html_card(df)
+        card_height = 220 + (math.ceil(len(df) / 2) * 85)
+        components.html(html_content, height=card_height, scrolling=True)
+    else:
+        st.info("💡 لا يوجد أعضاء مسجلين حتى الآن.")
 
 # --- التبويب الثاني ---
 with tab2:
-  st.subheader("🌸 تسجيل وزيادة النقاط")
+    st.subheader("🌸 تسجيل وزيادة النقاط")
 
-  pwd_tab2 = st.text_input(
-      "🔑 أدخل كلمة سر الإدارة للتعديل:", type="password", key="pwd_tab2"
-  )
-
-  if pwd_tab2 == ADMIN_PASSWORD:
-    st.success("🔓 تم التحقق بنجاح! يمكنك الآن تسجيل النقاط.")
-
-    mode = st.radio(
-        "طريقة الإضافة:",
-        [
-            "إضافة Opal's مباشرة 💎",
-            "تحويل نقاط تفاعل (كل 50 نقطة = 1 Opal's) 🪙",
-        ],
-        horizontal=True,
+    pwd_tab2 = st.text_input(
+        "🔑 أدخل كلمة سر الإدارة للتعديل:", type="password", key="pwd_tab2"
     )
 
-    with st.form("add_form", clear_on_submit=True):
-      name_input = st.text_input("اسم العضو / الإداري:")
-      role_input = st.radio(
-          "نوع الحساب:", ["عضو متفاعل 👥", "إداري 🛡️"], horizontal=True
-      )
+    if pwd_tab2 == ADMIN_PASSWORD:
+        st.success("🔓 تم التحقق بنجاح! يمكنك الآن تسجيل النقاط.")
 
-      if "مباشرة" in mode:
-        val_input = st.number_input(
-            "عدد Opal's المُضافة:", min_value=0.1, value=1.0, step=0.5
+        mode = st.radio(
+            "طريقة الإضافة:",
+            [
+                "إضافة Opal's مباشرة 💎",
+                "تحويل نقاط تفاعل (كل 50 نقطة = 1 Opal's) 🪙",
+            ],
+            horizontal=True,
         )
-      else:
-        act_input = st.number_input(
-            "عدد نقاط التفاعل:", min_value=1, value=50, step=10
-        )
-        val_input = act_input / 50.0
 
-      if st.form_submit_button("🚀 حفظ وزيادة النقاط"):
-        if name_input.strip():
-          clean_name = name_input.strip()
-          clean_role = "إداري" if "إداري" in role_input else "عضو"
+        with st.form("add_form", clear_on_submit=True):
+            name_input = st.text_input("اسم العضو / الإداري:")
+            role_input = st.radio(
+                "نوع الحساب:", ["عضو متفاعل 👥", "إداري 🛡️"], horizontal=True
+            )
 
-          conn = get_connection()
-          c = conn.cursor()
-          c.execute(
-              """
-              INSERT INTO members (name, oplz, role) VALUES (?, ?, ?)
-              ON CONFLICT(name) DO UPDATE SET 
-                  oplz = oplz + ?,
-                  role = ?
-              """,
-              (clean_name, val_input, clean_role, val_input, clean_role),
-          )
-          conn.commit()
-          conn.close()
+            if "مباشرة" in mode:
+                val_input = st.number_input(
+                    "عدد Opal's المُضافة:", min_value=0.1, value=1.0, step=0.5
+                )
+            else:
+                act_input = st.number_input(
+                    "عدد نقاط التفاعل:", min_value=1, value=50, step=10
+                )
+                val_input = act_input / 50.0
 
-          st.success(f"✅ تم إضافة {val_input:g} Opal's لـ {clean_name}")
-          st.rerun()
-  else:
-    if pwd_tab2:
-      st.error("❌ كلمة السر غير صحيحة!")
+            if st.form_submit_button("🚀 حفظ وزيادة النقاط"):
+                if name_input.strip():
+                    clean_name = name_input.strip()
+                    clean_role = "إداري" if "إداري" in role_input else "عضو"
+
+                    conn = get_connection()
+                    c = conn.cursor()
+                    sql_upsert = "INSERT INTO members (name, oplz, role) VALUES (?, ?, ?) ON CONFLICT(name) DO UPDATE SET oplz = oplz + ?, role = ?"
+                    c.execute(
+                        sql_upsert,
+                        (clean_name, val_input, clean_role, val_input, clean_role),
+                    )
+                    conn.commit()
+                    conn.close()
+
+                    st.success(f"✅ تم إضافة {val_input:g} Opal's لـ {clean_name}")
+                    st.rerun()
     else:
-      st.warning(
-          "🔒 هذه المنطقة محمية. يرجى إدخال كلمة سر الإدارة للوصول لخيار"
-          " الإضافة."
-      )
+        if pwd_tab2:
+            st.error("❌ كلمة السر غير صحيحة!")
+        else:
+            st.warning(
+                "🔒 هذه المنطقة محمية. يرجى إدخال كلمة سر الإدارة للوصول لخيار"
+                " الإضافة."
+            )
 
 # --- التبويب الثالث ---
 with tab3:
-  st.subheader("⚙️ إدارة وتعديل حسابات الأعضاء")
+    st.subheader("⚙️ إدارة وتعديل حسابات الأعضاء")
 
-  pwd_tab3 = st.text_input(
-      "🔑 أدخل كلمة سر الإدارة للتعديل:", type="password", key="pwd_tab3"
-  )
+    pwd_tab3 = st.text_input(
+        "🔑 أدخل كلمة سر الإدارة للتعديل:", type="password", key="pwd_tab3"
+    )
 
-  if pwd_tab3 == ADMIN_PASSWORD:
-    st.success("🔓 تم التحقق بنجاح!")
+    if pwd_tab3 == ADMIN_PASSWORD:
+        st.success("🔓 تم التحقق بنجاح!")
 
-    conn = get_connection()
-    df_m = pd.read_sql_query("SELECT name, role, oplz FROM members", conn)
-    conn.close()
-
-    if not df_m.empty:
-      selected = st.selectbox("اختر عضواً للتعديل أو الحذف:", df_m["name"])
-      curr = df_m[df_m["name"] == selected].iloc[0]
-
-      col_a, col_b = st.columns(2)
-      with col_a:
-        new_val = st.number_input(
-            "تعديل الرصيد:", value=float(curr["oplz"]), step=0.5
-        )
-        if st.button("✏️ تحديث الرصيد"):
-          conn = get_connection()
-          c = conn.cursor()
-          c.execute(
-              "UPD
+        conn = get_
