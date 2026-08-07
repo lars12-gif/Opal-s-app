@@ -7,31 +7,108 @@ import streamlit.components.v1 as components
 # 1. كلمة السر الخاصة بالإدارة
 ADMIN_PASSWORD = "iraq2026"
 
-# 2. إعدادات الصفحة والواجهة بنمط أنمي ساكورا (Bellona Group Theme)
+# 2. إعدادات الصفحة
 st.set_page_config(
     page_title="BELLONA | نظام نقاط Opal's", page_icon="🌸", layout="centered"
 )
 
-# تخصيص التصميم والأنيميشن الخاص بتساقط أوراق الساكورا والأصوات والبارتكلز
+# 3. محرك الصوت والبارتكلز والتفاعل المباشر عبر components.html
+components.html(
+    """
+    <script>
+    (function() {
+        const pDoc = window.parent.document;
+        
+        // إنشاء الصوت برمجياً (UI Pop Sound)
+        let audioCtx = null;
+        function playPopSound() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(700, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1400, audioCtx.currentTime + 0.08);
+                
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch(e) {}
+        }
+
+        // إضافة تأثير البارتكلز الملونة
+        if (!window.parent.particleListenerAdded) {
+            window.parent.particleListenerAdded = true;
+            
+            pDoc.addEventListener('click', function(e) {
+                playPopSound();
+                
+                const symbols = ['🌸', '✨', '🌺', '💖', '⭐'];
+                for (let i = 0; i < 6; i++) {
+                    const particle = pDoc.createElement('div');
+                    particle.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                    
+                    particle.style.position = 'fixed';
+                    particle.style.pointerEvents = 'none';
+                    particle.style.zIndex = '999999';
+                    particle.style.fontSize = '20px';
+                    particle.style.left = e.clientX + 'px';
+                    particle.style.top = e.clientY + 'px';
+                    particle.style.transition = 'all 0.6s cubic-bezier(0.1, 0.8, 0.3, 1)';
+                    particle.style.opacity = '1';
+                    
+                    pDoc.body.appendChild(particle);
+                    
+                    const dx = (Math.random() - 0.5) * 140;
+                    const dy = (Math.random() - 0.5) * 140 - 20;
+                    const rot = (Math.random() - 0.5) * 360;
+                    
+                    requestAnimationFrame(() => {
+                        particle.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg) scale(1.3)`;
+                        particle.style.opacity = '0';
+                    });
+                    
+                    setTimeout(() => particle.remove(), 650);
+                }
+            });
+        }
+    })();
+    </script>
+""",
+    height=0,
+)
+
+# 4. تنسيقات الـ CSS وتصاميم الواجهة الخرافية
 st.markdown(
     """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
     
     html, body, [class*="css"] {
-        font-family: 'Cairo', sans-serif;
+        font-family: 'Cairo', sans-serif !important;
     }
 
-    /* خلفية الموقع بأسلوب بيبي بينك وأبيض لطيف */
+    /* خلفية الموقع بأسلوب بيبي بينك مريح */
     .stApp {
-        background: linear-gradient(180deg, #FFFFFF 0%, #FFF0F5 50%, #FFE4E1 100%);
+        background: linear-gradient(180deg, #FFFFFF 0%, #FFF0F5 50%, #FFE4E1 100%) !important;
         direction: rtl;
         text-align: right;
     }
 
-    /* أنيميشن تساقط أوراق الساكورا في خلفية الموقع */
+    /* أنيميشن تساقط أوراق الساكورا */
     @keyframes sakura-fall {
-        0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+        0% { transform: translateY(-10vh) rotate(0deg); opacity: 0.9; }
         100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
     }
     
@@ -51,20 +128,19 @@ st.markdown(
         animation: sakura-fall 8s linear infinite;
     }
     
-    .p1 { left: 10%; width: 12px; height: 16px; animation-duration: 7s; animation-delay: 0s; }
-    .p2 { left: 25%; width: 10px; height: 14px; animation-duration: 9s; animation-delay: 2s; background: #FFC0CB; }
-    .p3 { left: 40%; width: 15px; height: 18px; animation-duration: 6s; animation-delay: 1s; }
-    .p4 { left: 60%; width: 11px; height: 15px; animation-duration: 8s; animation-delay: 3s; background: #FFB6C1; }
-    .p5 { left: 75%; width: 14px; height: 17px; animation-duration: 10s; animation-delay: 0.5s; }
-    .p6 { left: 90%; width: 9px; height: 13px; animation-duration: 7.5s; animation-delay: 2.5s; }
+    .p1 { left: 8%; width: 14px; height: 18px; animation-duration: 7s; animation-delay: 0s; }
+    .p2 { left: 22%; width: 10px; height: 14px; animation-duration: 9s; animation-delay: 2s; background: #FFC0CB; }
+    .p3 { left: 45%; width: 16px; height: 20px; animation-duration: 6.5s; animation-delay: 1s; }
+    .p4 { left: 68%; width: 12px; height: 15px; animation-duration: 8.5s; animation-delay: 3s; background: #FFB6C1; }
+    .p5 { left: 85%; width: 15px; height: 18px; animation-duration: 10s; animation-delay: 0.5s; }
 
     /* العناوين والبطاقات الرئيسية */
     .main-title {
         text-align: center;
         color: #D81B60;
         font-weight: 900;
-        font-size: 2.4rem;
-        margin-bottom: 5px;
+        font-size: 2.5rem;
+        margin-bottom: 2px;
         text-shadow: 0px 3px 12px rgba(216, 27, 96, 0.2);
     }
     .bellona-sub {
@@ -73,13 +149,13 @@ st.markdown(
         font-size: 1.15rem;
         font-weight: 700;
         margin-bottom: 15px;
-        letter-spacing: 2px;
+        letter-spacing: 1px;
     }
     .admin-info {
         text-align: center;
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 18px;
-        padding: 14px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 12px;
         margin-bottom: 25px;
         border: 2px solid #FFB7C5;
         box-shadow: 0 6px 20px rgba(255, 183, 197, 0.35);
@@ -87,31 +163,31 @@ st.markdown(
     .admin-badge {
         display: inline-block;
         margin: 0 10px;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         color: #880E4F;
         font-weight: 800;
     }
-    
-    /* 🌸 تحسين مظهر التبويبات وقوائم الخيارات بالكامل 🌸 */
+
+    /* 🌸 خلفيات وقوائم التبويبات الفخمة 🌸 */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
-        background: linear-gradient(135deg, #FFF0F5 0%, #FFE4E1 100%);
-        padding: 10px 12px;
-        border-radius: 20px;
-        border: 2px solid #FF80AB;
-        box-shadow: 0 6px 20px rgba(216, 27, 96, 0.12);
-        justify-content: center;
+        gap: 12px !important;
+        background: #FFE4E1 !important;
+        padding: 12px 14px !important;
+        border-radius: 22px !important;
+        border: 2px solid #FF80AB !important;
+        box-shadow: 0 8px 25px rgba(216, 27, 96, 0.15) !important;
+        justify-content: center !important;
     }
     
     .stTabs [data-baseweb="tab"] {
-        border-radius: 12px !important;
+        border-radius: 14px !important;
         background-color: #FFFFFF !important;
         color: #C2185B !important;
         font-weight: 800 !important;
-        border: 1.5px solid #FFC1E3 !important;
-        padding: 10px 20px !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-        transition: all 0.25s ease-in-out;
+        border: 2px solid #FFC1E3 !important;
+        padding: 10px 22px !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important;
+        transition: all 0.25s ease-in-out !important;
     }
 
     .stTabs [data-baseweb="tab"]:hover {
@@ -123,40 +199,19 @@ st.markdown(
     .stTabs [aria-selected="true"] {
         background: linear-gradient(135deg, #EC407A 0%, #D81B60 100%) !important;
         color: #FFFFFF !important;
-        border: 1.5px solid #D81B60 !important;
-        box-shadow: 0 5px 15px rgba(216, 27, 96, 0.4) !important;
+        border: 2px solid #D81B60 !important;
+        box-shadow: 0 6px 18px rgba(216, 27, 96, 0.4) !important;
         transform: translateY(-2px);
     }
 
-    /* خلفية كارت صلبة لمحتوى كل تبويب لبروز النصوص */
+    /* خلفية كارت بيضاء بارزة لمحتوى كل تبويب لمنع أي شكل نشاز */
     div[data-baseweb="tab-panel"] {
-        background: rgba(255, 255, 255, 0.95);
-        border: 2px solid #FFC1E3;
-        border-radius: 22px;
-        padding: 25px;
-        margin-top: 15px;
-        box-shadow: 0 10px 30px rgba(216, 27, 96, 0.1);
-    }
-
-    /* تصميم جسيمات الضغط (Click Sparkles) */
-    .click-sparkle {
-        position: fixed;
-        pointer-events: none;
-        z-index: 99999;
-        font-size: 18px;
-        user-select: none;
-        animation: burstOut 0.7s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
-    }
-
-    @keyframes burstOut {
-        0% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(0.5) rotate(0deg);
-        }
-        100% {
-            opacity: 0;
-            transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.4) rotate(var(--rot));
-        }
+        background: rgba(255, 255, 255, 0.95) !important;
+        border: 2px solid #FFC1E3 !important;
+        border-radius: 24px !important;
+        padding: 25px !important;
+        margin-top: 15px !important;
+        box-shadow: 0 10px 30px rgba(216, 27, 96, 0.1) !important;
     }
     </style>
     
@@ -167,74 +222,12 @@ st.markdown(
         <div class="petal p3"></div>
         <div class="petal p4"></div>
         <div class="petal p5"></div>
-        <div class="petal p6"></div>
     </div>
-
-    <!-- سكربت تفاعل النقر + الأصوات + الجسيمات الملونة -->
-    <script>
-    let audioCtx = null;
-
-    function playClickPop() {
-        try {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(650, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1300, audioCtx.currentTime + 0.07);
-            
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.07);
-            
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.07);
-        } catch(e){}
-    }
-
-    document.addEventListener('click', function(e) {
-        playClickPop();
-
-        const symbols = ['🌸', '✨', '🌺', '💖', '✨'];
-        const count = 6;
-        
-        for (let i = 0; i < count; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'click-sparkle';
-            particle.innerText = symbols[Math.floor(Math.random() * symbols.length)];
-            
-            particle.style.left = e.clientX + 'px';
-            particle.style.top = e.clientY + 'px';
-            
-            const destX = (Math.random() - 0.5) * 130;
-            const destY = (Math.random() - 0.5) * 130 - 20;
-            const rot = (Math.random() - 0.5) * 360;
-            
-            particle.style.setProperty('--dx', destX + 'px');
-            particle.style.setProperty('--dy', destY + 'px');
-            particle.style.setProperty('--rot', rot + 'deg');
-            
-            document.body.appendChild(particle);
-            
-            setTimeout(() => {
-                particle.remove();
-            }, 680);
-        }
-    });
-    </script>
 """,
     unsafe_allow_html=True,
 )
 
-# 3. إدارة قاعدة البيانات
+# 5. إدارة قاعدة البيانات
 DB_NAME = "oplz_data.db"
 
 
@@ -256,7 +249,7 @@ def init_db():
 init_db()
 
 
-# 4. حساب الرتب
+# 6. حساب الرتب
 def get_rank(oplz, role="عضو"):
   if role == "إداري":
     if oplz >= 800:
@@ -282,7 +275,7 @@ def get_rank(oplz, role="عضو"):
       return "🌱 ROOKIE (الوافد)"
 
 
-# 5. تصميم بطاقة أنمي الساكورا لـ BELLONA GROUP
+# 7. تصميم بطاقات الترتيب
 def create_html_card(df):
   rows_html = ""
 
@@ -349,24 +342,6 @@ def create_html_card(df):
           margin: 0 auto;
           box-shadow: 0 12px 35px rgba(216, 27, 96, 0.15);
           position: relative;
-          overflow: hidden;
-        }}
-        
-        #card-container::before {{
-          content: '🌸';
-          position: absolute;
-          top: -10px;
-          left: -10px;
-          font-size: 70px;
-          opacity: 0.2;
-        }}
-        #card-container::after {{
-          content: '🌺';
-          position: absolute;
-          bottom: -10px;
-          right: -10px;
-          font-size: 70px;
-          opacity: 0.2;
         }}
 
         .header {{ 
@@ -381,8 +356,6 @@ def create_html_card(df):
           color: #D81B60;
           font-size: 26px;
           font-weight: 900;
-          letter-spacing: 1px;
-          text-shadow: 1px 1px 2px rgba(255, 182, 193, 0.5);
         }}
         .sub-logo {{
           font-size: 13px;
@@ -398,7 +371,6 @@ def create_html_card(df):
           font-size: 13px;
           color: #880E4F;
           font-weight: 700;
-          box-shadow: 0 2px 8px rgba(255, 193, 227, 0.4);
         }}
         .grid-container {{
           display: grid;
@@ -409,7 +381,7 @@ def create_html_card(df):
           display: flex;
           justify-content: space-between;
           align-items: center;
-          background: rgba(255, 255, 255, 0.9);
+          background: rgba(255, 255, 255, 0.95);
           border: 1.5px solid #FFD1DC;
           border-radius: 16px;
           padding: 10px 16px;
@@ -428,14 +400,13 @@ def create_html_card(df):
           border-radius: 10px;
           background: #FFE4E1;
           color: #C2185B;
-          white-space: nowrap;
         }}
         .b-1 {{ background: #FFD700; color: #5D4037; }}
         .b-2 {{ background: #E1BEE7; color: #4A148C; }}
         .b-3 {{ background: #F8BBD0; color: #880E4F; }}
         
         .name-box {{ display: flex; flex-direction: column; gap: 2px; }}
-        .member-name {{ font-size: 15px; font-weight: 700; color: #37474F; line-height: 1.2; }}
+        .member-name {{ font-size: 15px; font-weight: 700; color: #37474F; }}
         .role-tag {{ font-size: 10px; padding: 2px 8px; border-radius: 6px; width: fit-content; font-weight: 700; }}
         .tag-admin {{ background: #EC407A; color: #FFF; }}
         .tag-user {{ background: #F48FB1; color: #FFF; }}
@@ -457,9 +428,7 @@ def create_html_card(df):
           box-shadow: 0 4px 18px rgba(216, 27, 96, 0.35);
           width: 100%;
           max-width: 420px;
-          transition: transform 0.2s;
         }}
-        .dl-btn:active {{ transform: scale(0.98); }}
 
         @media (max-width: 600px) {{
           .grid-container {{ grid-template-columns: 1fr; }}
@@ -488,11 +457,7 @@ def create_html_card(df):
       <script>
         function downloadCard() {{
           const card = document.getElementById('card-container');
-          html2canvas(card, {{
-            scale: 2,
-            backgroundColor: '#FFFFFF',
-            useCORS: true
-          }}).then(canvas => {{
+          html2canvas(card, {{ scale: 2, backgroundColor: '#FFFFFF', useCORS: true }}).then(canvas => {{
             const link = document.createElement('a');
             link.download = 'bellona_opals_leaderboard.png';
             link.href = canvas.toDataURL('image/png');
@@ -506,7 +471,7 @@ def create_html_card(df):
   return html_code
 
 
-# 6. الواجهة الرئيسية
+# 8. الواجهة الرئيسية
 st.markdown(
     '<p class="main-title">🌸 BELLONA GROUP 🌸</p>', unsafe_allow_html=True
 )
@@ -532,7 +497,7 @@ tab1, tab2, tab3 = st.tabs([
     "⚙️ إدارة الأعضاء",
 ])
 
-# --- التبويب الأول (متاح للجميع للرؤية والتحميل) ---
+# --- التبويب الأول ---
 with tab1:
   conn = get_connection()
   df = pd.read_sql_query(
@@ -547,7 +512,7 @@ with tab1:
   else:
     st.info("💡 لا يوجد أعضاء مسجلين حتى الآن.")
 
-# --- التبويب الثاني (محمي بباسورد) ---
+# --- التبويب الثاني ---
 with tab2:
   st.subheader("🌸 تسجيل وزيادة النقاط")
 
@@ -613,7 +578,7 @@ with tab2:
           " الإضافة."
       )
 
-# --- التبويب الثالث (محمي بباسورد) ---
+# --- التبويب الثالث ---
 with tab3:
   st.subheader("⚙️ إدارة وتعديل حسابات الأعضاء")
 
@@ -638,4 +603,27 @@ with tab3:
             "تعديل الرصيد:", value=float(curr["oplz"]), step=0.5
         )
         if st.button("✏️ تحديث الرصيد"):
-          conn = get_connection
+          conn = get_connection()
+          c = conn.cursor()
+          c.execute(
+              "UPDATE members SET oplz = ? WHERE name = ?",
+              (new_val, selected),
+          )
+          conn.commit()
+          conn.close()
+          st.success("تم التحديث!")
+          st.rerun()
+
+      with col_b:
+        if st.button(f"❌ حذف {selected}"):
+          conn = get_connection()
+          c = conn.cursor()
+          c.execute("DELETE FROM members WHERE name = ?", (selected,))
+          conn.commit()
+          conn.close()
+          st.rerun()
+    else:
+      st.info("💡 لا يوجد أعضاء مسجلين للحذف أو التعديل.")
+  else:
+    if pwd_tab3:
+     
