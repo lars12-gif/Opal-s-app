@@ -5,7 +5,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 # 1. كلمة السر الخاصة بالإدارة
-ADMIN_PASSWORD = "iraq2026"
+ADMIN_PASSWORD = "سمج نوتيلا"
 
 # 2. إعدادات الصفحة
 st.set_page_config(
