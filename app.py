@@ -4,7 +4,10 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
-# 1. إعدادات الصفحة والواجهة بنمط أنمي ساكورا (Bellona Group Theme)
+# 1. كلمة السر الخاصة بالإدارة
+ADMIN_PASSWORD = "iraq2026"
+
+# 2. إعدادات الصفحة والواجهة بنمط أنمي ساكورا (Bellona Group Theme)
 st.set_page_config(
     page_title="BELLONA | نظام نقاط Opal's", page_icon="🌸", layout="centered"
 )
@@ -120,7 +123,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 2. إدارة قاعدة البيانات
+# 3. إدارة قاعدة البيانات
 DB_NAME = "oplz_data.db"
 
 
@@ -142,7 +145,7 @@ def init_db():
 init_db()
 
 
-# 3. حساب الرتب
+# 4. حساب الرتب
 def get_rank(oplz, role="عضو"):
   if role == "إداري":
     if oplz >= 800:
@@ -168,7 +171,7 @@ def get_rank(oplz, role="عضو"):
       return "🌱 ROOKIE (الوافد)"
 
 
-# 4. تصميم بطاقة أنمي الساكورا لـ BELLONA GROUP
+# 5. تصميم بطاقة أنمي الساكورا لـ BELLONA GROUP
 def create_html_card(df):
   rows_html = ""
 
@@ -238,7 +241,6 @@ def create_html_card(df):
           overflow: hidden;
         }}
         
-        /* تأثير أغصان أزهار ساكورا خفيفة على الأطراف */
         #card-container::before {{
           content: '🌸';
           position: absolute;
@@ -393,7 +395,7 @@ def create_html_card(df):
   return html_code
 
 
-# 5. الواجهة الرئيسية
+# 6. الواجهة الرئيسية
 st.markdown(
     '<p class="main-title">🌸 BELLONA GROUP 🌸</p>', unsafe_allow_html=True
 )
@@ -416,10 +418,10 @@ st.markdown(
 tab1, tab2, tab3 = st.tabs([
     "📸 بطاقة الترتيب (Bellona)",
     "➕ إضافة / تعديل نقاط",
-    "⚙️ إدارة الاعضاء",
+    "⚙️ إدارة الأعضاء",
 ])
 
-# --- التبويب الأول ---
+# --- التبويب الأول (متاح للجميع للرؤية والتحميل) ---
 with tab1:
   conn = get_connection()
   df = pd.read_sql_query(
@@ -434,86 +436,124 @@ with tab1:
   else:
     st.info("💡 لا يوجد أعضاء مسجلين حتى الآن.")
 
-# --- التبويب الثاني ---
+# --- التبويب الثاني (محمي بباسورد) ---
 with tab2:
   st.subheader("🌸 تسجيل وزيادة النقاط")
 
-  mode = st.radio(
-      "طريقة الإضافة:",
-      ["إضافة Opal's مباشرة 💎", "تحويل نقاط تفاعل (كل 50 نقطة = 1 Opal's) 🪙"],
-      horizontal=True,
+  pwd_tab2 = st.text_input(
+      "🔑 أدخل كلمة سر الإدارة للتعديل:", type="password", key="pwd_tab2"
   )
 
-  with st.form("add_form", clear_on_submit=True):
-    name_input = st.text_input("اسم العضو / الإداري:")
-    role_input = st.radio(
-        "نوع الحساب:", ["عضو متفاعل 👥", "إداري 🛡️"], horizontal=True
+  if pwd_tab2 == ADMIN_PASSWORD:
+    st.success("🔓 تم التحقق بنجاح! يمكنك الآن تسجيل النقاط.")
+
+    mode = st.radio(
+        "طريقة الإضافة:",
+        [
+            "إضافة Opal's مباشرة 💎",
+            "تحويل نقاط تفاعل (كل 50 نقطة = 1 Opal's) 🪙",
+        ],
+        horizontal=True,
     )
 
-    if "مباشرة" in mode:
-      val_input = st.number_input(
-          "عدد Opal's المُضافة:", min_value=0.1, value=1.0, step=0.5
+    with st.form("add_form", clear_on_submit=True):
+      name_input = st.text_input("اسم العضو / الإداري:")
+      role_input = st.radio(
+          "نوع الحساب:", ["عضو متفاعل 👥", "إداري 🛡️"], horizontal=True
       )
+
+      if "مباشرة" in mode:
+        val_input = st.number_input(
+            "عدد Opal's المُضافة:", min_value=0.1, value=1.0, step=0.5
+        )
+      else:
+        act_input = st.number_input(
+            "عدد نقاط التفاعل:", min_value=1, value=50, step=10
+        )
+        val_input = act_input / 50.0
+
+      if st.form_submit_button("🚀 حفظ وزيادة النقاط"):
+        if name_input.strip():
+          clean_name = name_input.strip()
+          clean_role = "إداري" if "إداري" in role_input else "عضو"
+
+          conn = get_connection()
+          c = conn.cursor()
+          c.execute(
+              """
+                      INSERT INTO members (name, oplz, role) VALUES (?, ?, ?)
+                      ON CONFLICT(name) DO UPDATE SET 
+                          oplz = oplz + ?,
+                          role = ?
+                  """,
+              (clean_name, val_input, clean_role, val_input, clean_role),
+          )
+          conn.commit()
+          conn.close()
+
+          st.success(f"✅ تم إضافة {val_input:g} Opal's لـ {clean_name}")
+          st.rerun()
+  else:
+    if pwd_tab2:
+      st.error("❌ كلمة السر غير صحيحة!")
     else:
-      act_input = st.number_input(
-          "عدد نقاط التفاعل:", min_value=1, value=50, step=10
+      st.warning(
+          "🔒 هذه المنطقة محمية. يرجى إدخال كلمة سر الإدارة للوصول لخيار"
+          " الإضافة."
       )
-      val_input = act_input / 50.0
 
-    if st.form_submit_button("🚀 حفظ وزيادة النقاط"):
-      if name_input.strip():
-        clean_name = name_input.strip()
-        clean_role = "إداري" if "إداري" in role_input else "عضو"
-
-        conn = get_connection()
-        c = conn.cursor()
-        c.execute(
-            """
-                    INSERT INTO members (name, oplz, role) VALUES (?, ?, ?)
-                    ON CONFLICT(name) DO UPDATE SET 
-                        oplz = oplz + ?,
-                        role = ?
-                """,
-            (clean_name, val_input, clean_role, val_input, clean_role),
-        )
-        conn.commit()
-        conn.close()
-
-        st.success(f"✅ تم إضافة {val_input:g} Opal's لـ {clean_name}")
-        st.rerun()
-
-# --- التبويب الثالث ---
+# --- التبويب الثالث (محمي بباسورد) ---
 with tab3:
-  conn = get_connection()
-  df_m = pd.read_sql_query("SELECT name, role, oplz FROM members", conn)
-  conn.close()
+  st.subheader("⚙️ إدارة وتعديل حسابات الأعضاء")
 
-  if not df_m.empty:
-    selected = st.selectbox("اختر عضواً للتعديل أو الحذف:", df_m["name"])
-    curr = df_m[df_m["name"] == selected].iloc[0]
+  pwd_tab3 = st.text_input(
+      "🔑 أدخل كلمة سر الإدارة للتعديل:", type="password", key="pwd_tab3"
+  )
 
-    col_a, col_b = st.columns(2)
-    with col_a:
-      new_val = st.number_input(
-          "تعديل الرصيد:", value=float(curr["oplz"]), step=0.5
-      )
-      if st.button("✏️ تحديث الرصيد"):
-        conn = get_connection()
-        c = conn.cursor()
-        c.execute(
-            "UPDATE members SET oplz = ? WHERE name = ?", (new_val, selected)
+  if pwd_tab3 == ADMIN_PASSWORD:
+    st.success("🔓 تم التحقق بنجاح!")
+
+    conn = get_connection()
+    df_m = pd.read_sql_query("SELECT name, role, oplz FROM members", conn)
+    conn.close()
+
+    if not df_m.empty:
+      selected = st.selectbox("اختر عضواً للتعديل أو الحذف:", df_m["name"])
+      curr = df_m[df_m["name"] == selected].iloc[0]
+
+      col_a, col_b = st.columns(2)
+      with col_a:
+        new_val = st.number_input(
+            "تعديل الرصيد:", value=float(curr["oplz"]), step=0.5
         )
-        conn.commit()
-        conn.close()
-        st.success("تم التحديث!")
-        st.rerun()
+        if st.button("✏️ تحديث الرصيد"):
+          conn = get_connection()
+          c = conn.cursor()
+          c.execute(
+              "UPDATE members SET oplz = ? WHERE name = ?",
+              (new_val, selected),
+          )
+          conn.commit()
+          conn.close()
+          st.success("تم التحديث!")
+          st.rerun()
 
-    with col_b:
-      if st.button(f"❌ حذف {selected}"):
-        conn = get_connection()
-        c = conn.cursor()
-        c.execute("DELETE FROM members WHERE name = ?", (selected,))
-        conn.commit()
-        conn.close()
-        st.rerun()
-          
+      with col_b:
+        if st.button(f"❌ حذف {selected}"):
+          conn = get_connection()
+          c = conn.cursor()
+          c.execute("DELETE FROM members WHERE name = ?", (selected,))
+          conn.commit()
+          conn.close()
+          st.rerun()
+    else:
+      st.info("💡 لا يوجد أعضاء مسجلين للحذف أو التعديل.")
+  else:
+    if pwd_tab3:
+      st.error("❌ كلمة السر غير صحيحة!")
+    else:
+      st.warning(
+          "🔒 هذه المنطقة محمية. يرجى إدخال كلمة سر الإدارة لتعديل أو حذف"
+          " الأعضاء."
+      )
+        
