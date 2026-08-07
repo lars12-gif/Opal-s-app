@@ -12,14 +12,13 @@ st.set_page_config(
     page_title="BELLONA | نظام نقاط Opal's", page_icon="🌸", layout="centered"
 )
 
-# 3. محرك الصوت والبارتكلز والتفاعل المباشر عبر components.html
+# 3. محرك الصوت والبارتكلز والتفاعل المباشر
 components.html(
     """
     <script>
     (function() {
         const pDoc = window.parent.document;
         
-        // إنشاء الصوت برمجياً (UI Pop Sound)
         let audioCtx = null;
         function playPopSound() {
             try {
@@ -47,7 +46,6 @@ components.html(
             } catch(e) {}
         }
 
-        // إضافة تأثير البارتكلز الملونة
         if (!window.parent.particleListenerAdded) {
             window.parent.particleListenerAdded = true;
             
@@ -89,7 +87,7 @@ components.html(
     height=0,
 )
 
-# 4. تنسيقات الـ CSS وتصاميم الواجهة الخرافية
+# 4. تنسيقات الـ CSS وتصاميم الواجهة
 st.markdown(
     """
     <style>
@@ -99,14 +97,12 @@ st.markdown(
         font-family: 'Cairo', sans-serif !important;
     }
 
-    /* خلفية الموقع بأسلوب بيبي بينك مريح */
     .stApp {
         background: linear-gradient(180deg, #FFFFFF 0%, #FFF0F5 50%, #FFE4E1 100%) !important;
         direction: rtl;
         text-align: right;
     }
 
-    /* أنيميشن تساقط أوراق الساكورا */
     @keyframes sakura-fall {
         0% { transform: translateY(-10vh) rotate(0deg); opacity: 0.9; }
         100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
@@ -134,7 +130,6 @@ st.markdown(
     .p4 { left: 68%; width: 12px; height: 15px; animation-duration: 8.5s; animation-delay: 3s; background: #FFB6C1; }
     .p5 { left: 85%; width: 15px; height: 18px; animation-duration: 10s; animation-delay: 0.5s; }
 
-    /* العناوين والبطاقات الرئيسية */
     .main-title {
         text-align: center;
         color: #D81B60;
@@ -168,7 +163,6 @@ st.markdown(
         font-weight: 800;
     }
 
-    /* 🌸 خلفيات وقوائم التبويبات الفخمة 🌸 */
     .stTabs [data-baseweb="tab-list"] {
         gap: 12px !important;
         background: #FFE4E1 !important;
@@ -204,7 +198,6 @@ st.markdown(
         transform: translateY(-2px);
     }
 
-    /* خلفية كارت بيضاء بارزة لمحتوى كل تبويب لمنع أي شكل نشاز */
     div[data-baseweb="tab-panel"] {
         background: rgba(255, 255, 255, 0.95) !important;
         border: 2px solid #FFC1E3 !important;
@@ -215,7 +208,6 @@ st.markdown(
     }
     </style>
     
-    <!-- عناصر تساقط الساكورا -->
     <div class="sakura-container">
         <div class="petal p1"></div>
         <div class="petal p2"></div>
@@ -232,18 +224,18 @@ DB_NAME = "oplz_data.db"
 
 
 def get_connection():
-  return sqlite3.connect(DB_NAME, check_same_thread=False)
+    return sqlite3.connect(DB_NAME, check_same_thread=False)
 
 
 def init_db():
-  conn = get_connection()
-  c = conn.cursor()
-  c.execute(
-      "CREATE TABLE IF NOT EXISTS members (name TEXT PRIMARY KEY, oplz REAL"
-      " DEFAULT 0, role TEXT DEFAULT 'عضو')"
-  )
-  conn.commit()
-  conn.close()
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute(
+        "CREATE TABLE IF NOT EXISTS members (name TEXT PRIMARY KEY, oplz REAL"
+        " DEFAULT 0, role TEXT DEFAULT 'عضو')"
+    )
+    conn.commit()
+    conn.close()
 
 
 init_db()
@@ -251,62 +243,62 @@ init_db()
 
 # 6. حساب الرتب
 def get_rank(oplz, role="عضو"):
-  if role == "إداري":
-    if oplz >= 800:
-      return "⚔️ LEADER (القائد)"
-    elif oplz >= 500:
-      return "📊 OPAL'S MANAGER (مسؤول النقاط)"
-    elif oplz >= 300:
-      return "🔰 MODERATOR (المشرف العام)"
-    elif oplz >= 150:
-      return "🎭 HOST (المضيف)"
-    elif oplz >= 75:
-      return "⚡ ADMIN (الإداري)"
+    if role == "إداري":
+        if oplz >= 800:
+            return "⚔️ LEADER (القائد)"
+        elif oplz >= 500:
+            return "📊 OPAL'S MANAGER (مسؤول النقاط)"
+        elif oplz >= 300:
+            return "🔰 MODERATOR (المشرف العام)"
+        elif oplz >= 150:
+            return "🎭 HOST (المضيف)"
+        elif oplz >= 75:
+            return "⚡ ADMIN (الإداري)"
+        else:
+            return "❇️ NEW ADMIN (إداري مستجد)"
     else:
-      return "❇️ NEW ADMIN (إداري مستجد)"
-  else:
-    if oplz >= 500:
-      return "🏆 LEGEND (الأسطورة)"
-    elif oplz >= 200:
-      return "🌟 ELITE (النخبة)"
-    elif oplz >= 50:
-      return "🔥 ACTIVE (المتفاعل)"
-    else:
-      return "🌱 ROOKIE (الوافد)"
+        if oplz >= 500:
+            return "🏆 LEGEND (الأسطورة)"
+        elif oplz >= 200:
+            return "🌟 ELITE (النخبة)"
+        elif oplz >= 50:
+            return "🔥 ACTIVE (المتفاعل)"
+        else:
+            return "🌱 ROOKIE (الوافد)"
 
 
 # 7. تصميم بطاقات الترتيب
 def create_html_card(df):
-  rows_html = ""
+    rows_html = ""
 
-  for rank, row in enumerate(df.itertuples(index=False), start=1):
-    name, oplz, role = str(row[0]), float(row[1]), str(row[2])
-    rank_title = get_rank(oplz, role)
+    for rank, row in enumerate(df.itertuples(index=False), start=1):
+        name, oplz, role = str(row[0]), float(row[1]), str(row[2])
+        rank_title = get_rank(oplz, role)
 
-    rank_class = "rank-normal"
-    badge_class = "b-normal"
-    badge_text = f"#{rank}"
+        rank_class = "rank-normal"
+        badge_class = "b-normal"
+        badge_text = f"#{rank}"
 
-    if rank == 1:
-      rank_class = "rank-1"
-      badge_class = "b-1"
-      badge_text = "👑 #1"
-    elif rank == 2:
-      rank_class = "rank-2"
-      badge_class = "b-2"
-      badge_text = "🌸 #2"
-    elif rank == 3:
-      rank_class = "rank-3"
-      badge_class = "b-3"
-      badge_text = "✨ #3"
+        if rank == 1:
+            rank_class = "rank-1"
+            badge_class = "b-1"
+            badge_text = "👑 #1"
+        elif rank == 2:
+            rank_class = "rank-2"
+            badge_class = "b-2"
+            badge_text = "🌸 #2"
+        elif rank == 3:
+            rank_class = "rank-3"
+            badge_class = "b-3"
+            badge_text = "✨ #3"
 
-    role_tag = (
-        '<span class="role-tag tag-admin">🛡️ إداري</span>'
-        if role == "إداري"
-        else '<span class="role-tag tag-user">👥 عضو</span>'
-    )
+        role_tag = (
+            '<span class="role-tag tag-admin">🛡️ إداري</span>'
+            if role == "إداري"
+            else '<span class="role-tag tag-user">👥 عضو</span>'
+        )
 
-    rows_html += f"""
+        rows_html += f"""
         <div class="member-card {rank_class}">
             <div class="right-section">
                 <span class="badge {badge_class}">{badge_text}</span>
@@ -322,7 +314,7 @@ def create_html_card(df):
         </div>
         """
 
-  html_code = f"""
+    html_code = f"""
     <!DOCTYPE html>
     <html lang="ar" dir="rtl">
     <head>
@@ -468,7 +460,7 @@ def create_html_card(df):
     </body>
     </html>
     """
-  return html_code
+    return html_code
 
 
 # 8. الواجهة الرئيسية
@@ -499,131 +491,116 @@ tab1, tab2, tab3 = st.tabs([
 
 # --- التبويب الأول ---
 with tab1:
-  conn = get_connection()
-  df = pd.read_sql_query(
-      "SELECT name, oplz, role FROM members ORDER BY oplz DESC", conn
-  )
-  conn.close()
+    conn = get_connection()
+    df = pd.read_sql_query(
+        "SELECT name, oplz, role FROM members ORDER BY oplz DESC", conn
+    )
+    conn.close()
 
-  if not df.empty:
-    html_content = create_html_card(df)
-    card_height = 220 + (math.ceil(len(df) / 2) * 85)
-    components.html(html_content, height=card_height, scrolling=True)
-  else:
-    st.info("💡 لا يوجد أعضاء مسجلين حتى الآن.")
+    if not df.empty:
+        html_content = create_html_card(df)
+        card_height = 220 + (math.ceil(len(df) / 2) * 85)
+        components.html(html_content, height=card_height, scrolling=True)
+    else:
+        st.info("💡 لا يوجد أعضاء مسجلين حتى الآن.")
 
 # --- التبويب الثاني ---
 with tab2:
-  st.subheader("🌸 تسجيل وزيادة النقاط")
+    st.subheader("🌸 تسجيل وزيادة النقاط")
 
-  pwd_tab2 = st.text_input(
-      "🔑 أدخل كلمة سر الإدارة للتعديل:", type="password", key="pwd_tab2"
-  )
-
-  if pwd_tab2 == ADMIN_PASSWORD:
-    st.success("🔓 تم التحقق بنجاح! يمكنك الآن تسجيل النقاط.")
-
-    mode = st.radio(
-        "طريقة الإضافة:",
-        [
-            "إضافة Opal's مباشرة 💎",
-            "تحويل نقاط تفاعل (كل 50 نقطة = 1 Opal's) 🪙",
-        ],
-        horizontal=True,
+    pwd_tab2 = st.text_input(
+        "🔑 أدخل كلمة سر الإدارة للتعديل:", type="password", key="pwd_tab2"
     )
 
-    with st.form("add_form", clear_on_submit=True):
-      name_input = st.text_input("اسم العضو / الإداري:")
-      role_input = st.radio(
-          "نوع الحساب:", ["عضو متفاعل 👥", "إداري 🛡️"], horizontal=True
-      )
+    if pwd_tab2 == ADMIN_PASSWORD:
+        st.success("🔓 تم التحقق بنجاح! يمكنك الآن تسجيل النقاط.")
 
-      if "مباشرة" in mode:
-        val_input = st.number_input(
-            "عدد Opal's المُضافة:", min_value=0.1, value=1.0, step=0.5
+        mode = st.radio(
+            "طريقة الإضافة:",
+            [
+                "إضافة Opal's مباشرة 💎",
+                "تحويل نقاط تفاعل (كل 50 نقطة = 1 Opal's) 🪙",
+            ],
+            horizontal=True,
         )
-      else:
-        act_input = st.number_input(
-            "عدد نقاط التفاعل:", min_value=1, value=50, step=10
-        )
-        val_input = act_input / 50.0
 
-      if st.form_submit_button("🚀 حفظ وزيادة النقاط"):
-        if name_input.strip():
-          clean_name = name_input.strip()
-          clean_role = "إداري" if "إداري" in role_input else "عضو"
+        with st.form("add_form", clear_on_submit=True):
+            name_input = st.text_input("اسم العضو / الإداري:")
+            role_input = st.radio(
+                "نوع الحساب:", ["عضو متفاعل 👥", "إداري 🛡️"], horizontal=True
+            )
 
-          conn = get_connection()
-          c = conn.cursor()
-          c.execute(
-              """
-                      INSERT INTO members (name, oplz, role) VALUES (?, ?, ?)
-                      ON CONFLICT(name) DO UPDATE SET 
-                          oplz = oplz + ?,
-                          role = ?
-                  """,
-              (clean_name, val_input, clean_role, val_input, clean_role),
-          )
-          conn.commit()
-          conn.close()
+            if "مباشرة" in mode:
+                val_input = st.number_input(
+                    "عدد Opal's المُضافة:", min_value=0.1, value=1.0, step=0.5
+                )
+            else:
+                act_input = st.number_input(
+                    "عدد نقاط التفاعل:", min_value=1, value=50, step=10
+                )
+                val_input = act_input / 50.0
 
-          st.success(f"✅ تم إضافة {val_input:g} Opal's لـ {clean_name}")
-          st.rerun()
-  else:
-    if pwd_tab2:
-      st.error("❌ كلمة السر غير صحيحة!")
+            if st.form_submit_button("🚀 حفظ وزيادة النقاط"):
+                if name_input.strip():
+                    clean_name = name_input.strip()
+                    clean_role = "إداري" if "إداري" in role_input else "عضو"
+
+                    conn = get_connection()
+                    c = conn.cursor()
+                    c.execute(
+                        """
+                        INSERT INTO members (name, oplz, role) VALUES (?, ?, ?)
+                        ON CONFLICT(name) DO UPDATE SET 
+                            oplz = oplz + ?,
+                            role = ?
+                    """,
+                        (clean_name, val_input, clean_role, val_input, clean_role),
+                    )
+                    conn.commit()
+                    conn.close()
+
+                    st.success(f"✅ تم إضافة {val_input:g} Opal's لـ {clean_name}")
+                    st.rerun()
     else:
-      st.warning(
-          "🔒 هذه المنطقة محمية. يرجى إدخال كلمة سر الإدارة للوصول لخيار"
-          " الإضافة."
-      )
+        if pwd_tab2:
+            st.error("❌ كلمة السر غير صحيحة!")
+        else:
+            st.warning(
+                "🔒 هذه المنطقة محمية. يرجى إدخال كلمة سر الإدارة للوصول لخيار"
+                " الإضافة."
+            )
 
 # --- التبويب الثالث ---
 with tab3:
-  st.subheader("⚙️ إدارة وتعديل حسابات الأعضاء")
+    st.subheader("⚙️ إدارة وتعديل حسابات الأعضاء")
 
-  pwd_tab3 = st.text_input(
-      "🔑 أدخل كلمة سر الإدارة للتعديل:", type="password", key="pwd_tab3"
-  )
+    pwd_tab3 = st.text_input(
+        "🔑 أدخل كلمة سر الإدارة للتعديل:", type="password", key="pwd_tab3"
+    )
 
-  if pwd_tab3 == ADMIN_PASSWORD:
-    st.success("🔓 تم التحقق بنجاح!")
+    if pwd_tab3 == ADMIN_PASSWORD:
+        st.success("🔓 تم التحقق بنجاح!")
 
-    conn = get_connection()
-    df_m = pd.read_sql_query("SELECT name, role, oplz FROM members", conn)
-    conn.close()
+        conn = get_connection()
+        df_m = pd.read_sql_query("SELECT name, role, oplz FROM members", conn)
+        conn.close()
 
-    if not df_m.empty:
-      selected = st.selectbox("اختر عضواً للتعديل أو الحذف:", df_m["name"])
-      curr = df_m[df_m["name"] == selected].iloc[0]
+        if not df_m.empty:
+            selected = st.selectbox("اختر عضواً للتعديل أو الحذف:", df_m["name"])
+            curr = df_m[df_m["name"] == selected].iloc[0]
 
-      col_a, col_b = st.columns(2)
-      with col_a:
-        new_val = st.number_input(
-            "تعديل الرصيد:", value=float(curr["oplz"]), step=0.5
-        )
-        if st.button("✏️ تحديث الرصيد"):
-          conn = get_connection()
-          c = conn.cursor()
-          c.execute(
-              "UPDATE members SET oplz = ? WHERE name = ?",
-              (new_val, selected),
-          )
-          conn.commit()
-          conn.close()
-          st.success("تم التحديث!")
-          st.rerun()
-
-      with col_b:
-        if st.button(f"❌ حذف {selected}"):
-          conn = get_connection()
-          c = conn.cursor()
-          c.execute("DELETE FROM members WHERE name = ?", (selected,))
-          conn.commit()
-          conn.close()
-          st.rerun()
-    else:
-      st.info("💡 لا يوجد أعضاء مسجلين للحذف أو التعديل.")
-  else:
-    if pwd_tab3:
-     
+            col_a, col_b = st.columns(2)
+            with col_a:
+                new_val = st.number_input(
+                    "تعديل الرصيد:", value=float(curr["oplz"]), step=0.5
+                )
+                if st.button("✏️ تحديث الرصيد"):
+                    conn = get_connection()
+                    c = conn.cursor()
+                    c.execute(
+                        "UPDATE members SET oplz = ? WHERE name = ?",
+                        (new_val, selected),
+                    )
+                    conn.commit()
+                    conn.close()
+                    st.success("تم التحديث
