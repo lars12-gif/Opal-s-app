@@ -168,7 +168,6 @@ st.markdown(
         font-size: 1.05rem; color: #880E4F; font-weight: 800;
     }
 
-    /* زر الانتقال لموقع بنك الروبي المُطور */
     .bank-site-btn {
         display: block; width: 100%; text-align: center;
         background: linear-gradient(135deg, #EC407A 0%, #D81B60 100%);
@@ -180,7 +179,6 @@ st.markdown(
         transform: scale(1.02); box-shadow: 0 8px 25px rgba(216, 27, 96, 0.5);
     }
 
-    /* تطوير أزرار الإدخال والتفاعل (Streamlit Default Buttons) */
     .stButton>button {
         background: linear-gradient(90deg, #EC407A 0%, #D81B60 100%) !important;
         color: #FFFFFF !important; font-weight: 800 !important;
@@ -197,7 +195,6 @@ st.markdown(
         border: 2px solid #FFC1E3 !important; border-radius: 14px !important;
     }
 
-    /* التبويبات المطورة */
     .stTabs [data-baseweb="tab-list"] {
         gap: 12px !important; background: #FFE4E1 !important;
         padding: 12px 14px !important; border-radius: 22px !important;
@@ -237,7 +234,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 6. حساب الرتب (نفس المنطق الأصلي)
+# 6. حساب الرتب
 def get_rank(oplz, role="عضو"):
     if role == "إداري":
         if oplz >= 800: return "⚔️ LEADER (القائد)"
@@ -253,7 +250,7 @@ def get_rank(oplz, role="عضو"):
         else: return "🌱 ROOKIE (الوافد)"
 
 
-# 7. تصميم بطاقات الترتيب (نفس المنطق والتصميم الأصلي)
+# 7. تصميم بطاقات الترتيب
 def create_html_card(df):
     rows_html = ""
     for rank, row in enumerate(df.itertuples(index=False), start=1):
@@ -412,7 +409,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# زر الانتقال إلى بنك الروبي
 st.markdown(f'<a href="{RUBY_BANK_URL}" target="_blank" class="bank-site-btn">💎 الانتقال إلى الخزنة المصرفية (بنك الروبي) 🚀</a>', unsafe_allow_html=True)
 
 tab1, tab2, tab3 = st.tabs([
@@ -421,11 +417,15 @@ tab1, tab2, tab3 = st.tabs([
     "⚙️ إدارة الأعضاء",
 ])
 
-# --- التبويب الأول ---
+# --- التبويب الأول (تم تعديله بطريقة آمنة تماماً ضد أخطاء الـ API) ---
 with tab1:
-    res = supabase.table("members").select("name, oplz, role").order("oplz", desc=True).execute()
-df = pd.DataFrame(res.data or [])
-
+    try:
+        res = supabase.table("members").select("*").execute()
+        df = pd.DataFrame(res.data or [])
+        if not df.empty and 'oplz' in df.columns:
+            df = df.sort_values(by="oplz", ascending=False)
+    except Exception:
+        df = pd.DataFrame()
 
     if not df.empty:
         html_content = create_html_card(df)
@@ -464,23 +464,25 @@ with tab2:
                     clean_name = name_input.strip()
                     clean_role = "إداري" if "إداري" in role_input else "عضو"
 
-                    # تحديث أو إضافة (Upsert logic)
-                    res_check = supabase.table("members").select("oplz").eq("name", clean_name).execute()
-                    if res_check.data:
-                        new_oplz = float(res_check.data[0]['oplz']) + val_input
-                        supabase.table("members").update({
-                            "oplz": new_oplz,
-                            "role": clean_role
-                        }).eq("name", clean_name).execute()
-                    else:
-                        supabase.table("members").insert({
-                            "name": clean_name,
-                            "oplz": val_input,
-                            "role": clean_role
-                        }).execute()
+                    try:
+                        res_check = supabase.table("members").select("*").eq("name", clean_name).execute()
+                        if res_check.data:
+                            new_oplz = float(res_check.data[0]['oplz']) + val_input
+                            supabase.table("members").update({
+                                "oplz": new_oplz,
+                                "role": clean_role
+                            }).eq("name", clean_name).execute()
+                        else:
+                            supabase.table("members").insert({
+                                "name": clean_name,
+                                "oplz": val_input,
+                                "role": clean_role
+                            }).execute()
 
-                    st.success(f"✅ تم إضافة {val_input:g} Opal's لـ {clean_name}")
-                    st.rerun()
+                        st.success(f"✅ تم إضافة {val_input:g} Opal's لـ {clean_name}")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ حدث خطأ أثناء الحفظ: {e}")
     else:
         if pwd_tab2:
             st.error("❌ كلمة السر غير صحيحة!")
@@ -496,10 +498,13 @@ with tab3:
     if pwd_tab3 == ADMIN_PASSWORD:
         st.success("🔓 تم التحقق بنجاح!")
 
-        res_members = supabase.table("members").select("name, role, oplz").execute()
-        df_m = pd.DataFrame(res_members.data or [])
+        try:
+            res_members = supabase.table("members").select("*").execute()
+            df_m = pd.DataFrame(res_members.data or [])
+        except Exception:
+            df_m = pd.DataFrame()
 
-        if not df_m.empty:
+        if not df_m.empty and 'name' in df_m.columns:
             selected = st.selectbox("اختر عضواً للتعديل أو الحذف:", df_m["name"])
             curr = df_m[df_m["name"] == selected].iloc[0]
 
