@@ -396,7 +396,7 @@ st.markdown('<p class="bellona-sub">✨ نظام وقائمة ترتيب نقا�
 st.markdown("""
 <div class="ruby-bank-card">
     <span style="color: #880E4F; font-weight: 800; font-size: 15px;">💎 خدمات الخدمات المالية والتحويلات</span><br>
-    <a href="https://ruby-cryv.onrender.com/" target="_blank" class="ruby-btn">💎 الانتقال إلى بنك الروبي (Ruby Bank) 💎</a>
+    <a href="https://ruby-bellona.streamlit.app/" target="_blank" class="ruby-btn">💎 الانتقال إلى بنك الروبي (Ruby Bank) 💎</a>
 </div>
 """, unsafe_allow_html=True)
 
