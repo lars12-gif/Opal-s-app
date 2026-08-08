@@ -424,7 +424,8 @@ tab1, tab2, tab3 = st.tabs([
 # --- التبويب الأول ---
 with tab1:
     res = supabase.table("members").select("name, oplz, role").order("oplz", desc=True).execute()
-    df = pd.DataFrame(res.data or [])
+df = pd.DataFrame(res.data or [])
+
 
     if not df.empty:
         html_content = create_html_card(df)
